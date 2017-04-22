@@ -20,6 +20,8 @@
 
 import pygame
 from pygame.locals import *
+from pygame.display import *
+from pygame.mouse import *
 from sys import exit
 import os
 from time import *
@@ -43,14 +45,16 @@ import level_change
 import random
 import proceduralFlow
 import natural_calamities
-import game_sharing
-import olpcgames.mesh as mesh
 
+if model.FLAG_XO:
+    import game_sharing
+    import olpcgames.mesh as mesh
 
-    
 
 
 desktop2 = gui.Desktop()
+set_icon(pygame.image.load(os.path.join('data', 'WFPLOGO.png')).convert_alpha())
+
 def message_window():
     ''' Thread to display the messages'''
 
@@ -87,19 +91,28 @@ def message_window():
             message_label = gui.Label(position = threades.resize_pos((5,50),(450.0,150.0),win.size),size = threades.resize_pos((440,140),(450.0,150.0),win.size), parent = win, text = text, style = labelStyleCopy)
             sleep(6)
             win.close()
-        sleep(2)
+
+        if threades.GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if threades.GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if threades.GAME_EXIT_FLAG:
+            return
+        
 
 
 def load_sound(name):
 
     if not pygame.mixer:
-        return NoneSound()
+        return None
     fullname = os.path.join(name)
     try:
         sound = pygame.mixer.Sound(fullname)
     except pygame.error, message:
 
-        raise SystemExit, message
+        return None
     return sound
 
 def escape():
@@ -116,8 +129,16 @@ def escape():
 def safe_exit(button = None):
     #print 'in safe_exit'
     #print 'in safe_exit'
+    threades.GAME_EXIT_FLAG = True
+    if update_thread:
+        update_thread.join()
+    if message_thread:
+        message_thread.join()
+    sleep(1)
+    proceduralFlow.openStoryBoardFile()
     proceduralFlow.closeStoryBoardFile()
-    soundtrack.stop()
+    if soundtrack:
+        soundtrack.stop()
     pygame.mixer.quit()
     pygame.quit()
     exit()
@@ -153,14 +174,27 @@ def event_handling(e):
         
         win_flag = gui_buttons.gui_obj.get_win_flag()
         if not win_flag:
-            if e.key == K_s:
+            if e.key == K_s and gui_buttons.gui_obj.setup_button.enabled:
                 gui_buttons.gui_obj.setup_obj.setup()
-            if e.key == K_u:
+            if e.key == K_u and gui_buttons.gui_obj.upgrade_button.enabled:
                 gui_buttons.gui_obj.upgrade_obj.upgrade()
-            if e.key == K_b:
+            if e.key == K_b and gui_buttons.gui_obj.buysell_button.enabled:
                 gui_buttons.gui_obj.buysell_obj.buysell()
             
-            
+    if proceduralFlow.GAME_END_FLAG:
+        threades.PLACING_LIST_TEMP = []
+        proceduralFlow.GAME_END_FLAG = False
+        proceduralFlow.closeStoryBoardFile()
+        proceduralFlow.openStoryBoardFile()
+        threades.delete_saved_game()
+        proceduralFlow.storyboard_level = 1
+        proceduralFlow.load_level_obj.new_level_stats('data.pkl','graphics_layout.pkl')
+        event = game_events.Event(type = game_events.ACTIONCOMPLETEEVENT, facility_name = '', res_name = '' , res_quantity = 0)
+        game_events.EventQueue.add(event)
+        model.game_controller.reset_time()
+        pause_screen()
+        #print proceduralFlow.storyboard_level
+        
     if e.type == KEYUP:
         if e.key == K_UP:
             threades.transform_obj.stop_move('up')
@@ -186,16 +220,18 @@ def event_handling(e):
                 threades.transform_obj.focus()
             if e.button == 5:
                 threades.transform_obj.defocus()
-    
-    if e.type==mesh.CONNECT :
-        game_sharing.sharing_handler(e.type,None,'')
-    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,None,'']).start()
-    elif e.type==mesh.PARTICIPANT_ADD or e.type==mesh.PARTICIPANT_REMOVE :
-        game_sharing.sharing_handler(e.type,e.handle,'')
-    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,'']).start()
-    elif e.type==mesh.MESSAGE_MULTI or e.type==mesh.MESSAGE_UNI :
-        game_sharing.sharing_handler(e.type,e.handle,e.content)
-    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,e.content]).start()
+    if model.FLAG_XO:
+        
+        if e.type==mesh.CONNECT :
+            game_sharing.sharing_handler(e.type,None,'')
+        #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,None,'']).start()
+        elif e.type==mesh.PARTICIPANT_ADD or e.type==mesh.PARTICIPANT_REMOVE :
+            game_sharing.sharing_handler(e.type,e.handle,'')
+        #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,'']).start()
+        elif e.type==mesh.MESSAGE_MULTI or e.type==mesh.MESSAGE_UNI :
+            game_sharing.sharing_handler(e.type,e.handle,e.content)
+        #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,e.content]).start()
+
 
 
 soundtrack = load_sound(os.path.join('data', 'soundtrack.ogg'))
@@ -230,14 +266,25 @@ def get_update_region():
 
     
 
+def load_resume_game():
+   
+    actiontemp = proceduralFlow.actionTemplate()
+    actiontemp.actionType = 3
+    proceduralFlow.openStoryBoardFile()
+    action_obj = proceduralFlow.Actions(actiontemp)
+    
+    #threades.game_save_flag = False
+
+    
 class starting_intro:
     ''' Display the starting intro_text and menu
     '''
 
-    def main_menu(self,pause_flag = True):
+    def main_menu(self,pause_flag = True, game_save_flag = False):
         ''' Display the starting menu
         '''
-
+        self.init_game_save_flag = game_save_flag
+        self.game_save_flag = False
         logo = pygame.image.load(os.path.join('data', 'logo.png')).convert()
         self.ff_logo = pygame.transform.scale(logo,threades.resize_pos((1111,250)))
         threades.screen.fill((0,0,0))
@@ -248,24 +295,37 @@ class starting_intro:
 
         # Creating new button style
         buttonsurf = pygame.image.load(os.path.join('art','button_green.png')).convert_alpha()
+        buttonsurf = pygame.transform.scale(buttonsurf, (36, threades.resize_pt_y(40)))
         self.button_style = gui.createButtonStyle(myfont,(0,0,0), buttonsurf,4,1,4,4,1,4,4,1,4,4,1,4)
+        
 
         self.pause_flag = pause_flag
         if self.pause_flag:
-            self.start_button = gui.Button(position = threades.resize_pos((500,500)), size = threades.resize_pos((200,30)), parent = desktop2, text = "Start New Game",style = self.button_style)
+            self.start_button = gui.Button(position = threades.resize_pos((475,500)), size = threades.resize_pos((250,50)), parent = desktop2, text = "Start New Game",style = self.button_style)
             self.start_button.onClick = self.startup_text
-        else:
-            self.resume_button = gui.Button(position = threades.resize_pos((500,500)), size = threades.resize_pos((200,30)), parent = desktop2, text = "Resume Game",style = self.button_style)
-            self.resume_button.onClick = self.resume
+            
+            if self.init_game_save_flag == True:
+                self.resume_saved_level_button = gui.Button(position = threades.resize_pos((475,430)),size = threades.resize_pos((250,50)), parent = desktop2, text = "Resume Saved Game",style =self.button_style)
+                self.resume_saved_level_button.onClick = self.resume_saved_level
 
-        #self.resume_button = gui.Button(position = threades.resize_pos((500,550)), size = threades.resize_pos((200,30)), parent = threades.desktop, text = "Resume Game",style = self.button_style)
-        self.controls_button = gui.Button(position = threades.resize_pos((500,600)), size = threades.resize_pos((200,30)), parent = desktop2, text = "Controls",style = self.button_style)
-        self.exit_button = gui.Button(position = threades.resize_pos((500,650)), size = threades.resize_pos((200,30)), parent = desktop2, text = "Exit",style = self.button_style)
-        self.instructions_button = gui.Button(position = threades.resize_pos((500,550)), size = threades.resize_pos((200,30)), parent = desktop2, text = "Guide",style = self.button_style)
-        self.about_us_button = gui.Button(position = threades.resize_pos((1000,20)), size = threades.resize_pos((150,30)), parent = desktop2, text = "About Us",style = self.button_style)
+            
+        else:
+            self.resume_button = gui.Button(position = threades.resize_pos((475,500)), size = threades.resize_pos((250,50)), parent = desktop2, text = "Resume Game",style = self.button_style)
+            self.resume_button.onClick = self.resume
+            
+            #Save Game Button
+            if proceduralFlow.storyboard_level != 1:
+                self.save_button = gui.Button(position = threades.resize_pos((475,430)), size = threades.resize_pos((250,50)), parent = desktop2, text = "Save Current Level",style = self.button_style)
+                self.save_button.onClick = self.save_current_level
+
+        
+        self.controls_button = gui.Button(position = threades.resize_pos((475,640)), size = threades.resize_pos((250,50)), parent = desktop2, text = "Controls",style = self.button_style)
+        self.exit_button = gui.Button(position = threades.resize_pos((475,710)), size = threades.resize_pos((250,50)), parent = desktop2, text = "Exit",style = self.button_style)
+        self.instructions_button = gui.Button(position = threades.resize_pos((475,570)), size = threades.resize_pos((250,50)), parent = desktop2, text = "Guide",style = self.button_style)
+        self.about_us_button = gui.Button(position = threades.resize_pos((1000,20)), size = threades.resize_pos((150,40)), parent = desktop2, text = "About Us",style = self.button_style)
         
                                       
-        #self.resume_button.onClick = self.resume
+
         self.controls_button.onClick = self.controls
         self.exit_button.onClick = safe_exit
         
@@ -289,14 +349,14 @@ class starting_intro:
         win_style['font'] = myfont1
         win_style['font-color'] = self.green_color
         win_style['bg-color'] = (0,0,0)
-        win_style['border-color'] = (0,150,0)
+        win_style['border-color'] = (0,0,0)
         
         # Calculating position and size of window from the size of the threades.desktop
-        position_win =threades.resize_pos((150.0,270.0))
+        position_win =threades.resize_pos((150.0,310.0))
         size_win =threades.resize_pos((900.0,600.0))
 
         # Creating window
-        self.win = gui.Window(position = position_win, size = size_win, parent = desktop2, text = "     Guide" , style = win_style, shadeable = False, closeable = False,moveable = False)
+        self.win = gui.Window(position = position_win, size = size_win, parent = desktop2, text = "    Guide" , style = win_style, shadeable = False, closeable = False,moveable = False)
         self.win.onClose = lambda button: self.main_menu(self.pause_flag)
         #self.win.surf.set_alpha(140) This seems to be redundant as translucency doesnt seems to work properly
 
@@ -309,9 +369,9 @@ class starting_intro:
         labelStyleCopy['font-color'] = (0,200,0)
         labelStyleCopy['border-color'] = self.black_color
         
-        self.skip_button = gui.Button(position = threades.resize_pos((500,550),(900.0,600.0),self.win.size), size = threades.resize_pos((80,30),(900.0,600.0),self.win.size), parent = self.win, text = "  Skip  ",style = self.button_style)
-        self.next_button = gui.Button(position = threades.resize_pos((380,550),(900.0,600.0),self.win.size), size = threades.resize_pos((80,30),(900.0,600.0),self.win.size), parent = self.win, text = "  Next > ",style = self.button_style)
-        self.prev_button = gui.Button(position = threades.resize_pos((260,550),(900.0,600.0),self.win.size), size = threades.resize_pos((80,30),(900.0,600.0),self.win.size), parent = self.win, text = "  < Prev  ",style = self.button_style)
+        self.skip_button = gui.Button(position = threades.resize_pos((500,490),(900.0,600.0),self.win.size), size = threades.resize_pos((110,30),(900.0,600.0),self.win.size), parent = self.win, text = "  Skip  ",style = self.button_style)
+        self.next_button = gui.Button(position = threades.resize_pos((380,490),(900.0,600.0),self.win.size), size = threades.resize_pos((110,30),(900.0,600.0),self.win.size), parent = self.win, text = "  Next > ",style = self.button_style)
+        self.prev_button = gui.Button(position = threades.resize_pos((260,490),(900.0,600.0),self.win.size), size = threades.resize_pos((110,30),(900.0,600.0),self.win.size), parent = self.win, text = "  < Prev  ",style = self.button_style)
 
         self.next_button.onClick = self.increaseInstructionsCounter
         self.prev_button.onClick = self.decreaseInstructionsCounter
@@ -340,15 +400,16 @@ class starting_intro:
                     if e.key == K_LEFT:
                         if self.instructions_counter > 0 :
                             self.instructions_counter -= 1
-                if e.type==mesh.CONNECT :
-                    game_sharing.sharing_handler(e.type,None,'')
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,None,'']).start()
-                elif e.type==mesh.PARTICIPANT_ADD or e.type==mesh.PARTICIPANT_REMOVE :
-                    game_sharing.sharing_handler(e.type,e.handle,'')
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,'']).start()
-                elif e.type==mesh.MESSAGE_MULTI or e.type==mesh.MESSAGE_UNI :
-                    game_sharing.sharing_handler(e.type,e.handle,e.content)
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,e.content]).start()
+                if model.FLAG_XO:
+                    if e.type==mesh.CONNECT :
+                        game_sharing.sharing_handler(e.type,None,'')
+                    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,None,'']).start()
+                    elif e.type==mesh.PARTICIPANT_ADD or e.type==mesh.PARTICIPANT_REMOVE :
+                        game_sharing.sharing_handler(e.type,e.handle,'')
+                    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,'']).start()
+                    elif e.type==mesh.MESSAGE_MULTI or e.type==mesh.MESSAGE_UNI :
+                        game_sharing.sharing_handler(e.type,e.handle,e.content)
+                    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,e.content]).start()
 
 
             desktop2.update()
@@ -381,9 +442,9 @@ class starting_intro:
         win_style['font'] = myfont1
         win_style['font-color'] = self.green_color
         win_style['bg-color'] = (0,0,0)
-        win_style['border-color'] = (0,150,0)
+        win_style['border-color'] = (0,0,0)
         # Calculating position and size of window from the size of the threades.desktop
-        position_win =threades.resize_pos((150.0,270.0))
+        position_win =threades.resize_pos((150.0,280.0))
         size_win =threades.resize_pos((900.0,600.0))
 
         # Creating window
@@ -391,8 +452,6 @@ class starting_intro:
         self.win.onClose = lambda button: self.main_menu(self.pause_flag)
         #self.win.surf.set_alpha(140) This seems to be redundant as translucency doesnt seems to work properly
 
-        self.next_button = gui.Button(position = threades.resize_pos((500,650)), size = threades.resize_pos((200,30)), parent = self.win, text = "Next ",style = self.button_style)
-        
         myfont2 = pygame.font.Font("font.ttf", threades.resize_pt(20))
         labelStyleCopy = gui.defaultLabelStyle.copy()
         labelStyleCopy['border-width'] = 1
@@ -402,7 +461,7 @@ class starting_intro:
         labelStyleCopy['font-color'] = (0,200,0)
         labelStyleCopy['border-color'] = self.black_color
         
-        self.close_button = gui.Button(position = threades.resize_pos((500,550),(900.0,600.0),self.win.size), size = threades.resize_pos((80,30),(900.0,600.0),self.win.size), parent = self.win, text = "  Close  ",style = self.button_style)
+        self.close_button = gui.Button(position = threades.resize_pos((400,550),(900.0,600.0),self.win.size), size = threades.resize_pos((80,30),(900.0,600.0),self.win.size), parent = self.win, text = "  Close  ",style = self.button_style)
         
         self.close_button.onClick = self.close_win
         self.about_us_run = True
@@ -423,15 +482,16 @@ class starting_intro:
                     if e.key == 27:  # For escape key
                         self.about_us_run = False
                         self.win.close()
-                if e.type==mesh.CONNECT :
-                    game_sharing.sharing_handler(e.type,None,'')
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,None,'']).start()
-                elif e.type==mesh.PARTICIPANT_ADD or e.type==mesh.PARTICIPANT_REMOVE :
-                    game_sharing.sharing_handler(e.type,e.handle,'')
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,'']).start()
-                elif e.type==mesh.MESSAGE_MULTI or e.type==mesh.MESSAGE_UNI :
-                    game_sharing.sharing_handler(e.type,e.handle,e.content)
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,e.content]).start()
+                if model.FLAG_XO:
+                    if e.type==mesh.CONNECT :
+                        game_sharing.sharing_handler(e.type,None,'')
+                    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,None,'']).start()
+                    elif e.type==mesh.PARTICIPANT_ADD or e.type==mesh.PARTICIPANT_REMOVE :
+                        game_sharing.sharing_handler(e.type,e.handle,'')
+                    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,'']).start()
+                    elif e.type==mesh.MESSAGE_MULTI or e.type==mesh.MESSAGE_UNI :
+                        game_sharing.sharing_handler(e.type,e.handle,e.content)
+                    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,e.content]).start()
 
          
             desktop2.update()
@@ -441,101 +501,33 @@ class starting_intro:
     def startup_text(self,button = None):
         ''' Displays the startup text
         '''
-
+        
+        threades.current_level = 1
         self.remove_buttons()
-        threades.screen.fill((255,255,255))
-        hunger_map = pygame.image.load(os.path.join('data', 'Wfpwork.png')).convert()
-        hunger_map =  pygame.transform.scale(hunger_map,threades.new_screen_size)
-        threades.screen.blit(hunger_map,threades.resize_pos((0,0)))
-
-        color_brown = (255,214,150)
-        # gui.Window custom style
-        myfont = pygame.font.Font("font.ttf", threades.resize_pt(28))
-        win_style = gui.defaultWindowStyle.copy()
-        win_style['font'] = myfont
-        win_style['font-color'] = color_brown
-        win_style['bg-color'] = (0,0,0)
-        win_style['border-color'] = color_brown
-        position_win =threades.resize_pos((200.0,50.0))
-        size_win =threades.resize_pos((800.0,600.0))
-        win = gui.Window(position = position_win, size = size_win, parent = desktop2, text = " FOODFORCE II : ESCAPING POVERTY  " ,style = win_style,shadeable = False, closeable = False,moveable = False)
-        self.startup_text_run = True
-        win.surf.set_alpha(100)
-        myfont2 = pygame.font.Font("font.ttf",threades.resize_pt(19))
-        labelstyle1 = gui.defaultLabelStyle.copy()
-        labelstyle1['border-width'] = 0
-        labelstyle1['wordwrap'] = True
-        labelstyle1['autosize'] = False
-        labelstyle1['font'] = myfont2
-        labelstyle1['font-color'] = color_brown
-
-        counter = 0
-        label = gui.Label(position = threades.resize_pos((10.0,130.0),(800.0,600.0),win.size),size = threades.resize_pos((780.0,460.0),(800.0,600.0),win.size), parent = win, text = '', style = labelstyle1)
-        
-        button_style = gui.defaultButtonStyle.copy()
-        button_style['font'] = myfont2
-
-        self.skip_button = gui.Button(position = threades.resize_pos((600,550),(800.0,600.0),win.size), size = threades.resize_pos((150,30),(800.0,600.0),win.size), parent = win, text = "  Skip  ",style = button_style)
-        self.skip_button.onClick = self.turnoff_startup_run
-        model.global_time = 0
-        
-        #One time show of the background image
-        threades.screen.fill((255,255,255))
-        threades.screen.blit(hunger_map,threades.resize_pos((0,0)))
-        pygame.display.flip()
-        #sleep(5)
-        first_display = True
-        model.global_time = 0
-        while self.startup_text_run:
-
-            label.text =  texts.trailer_text[counter]
-            for e in gui.setEvents(pygame.event.get()):
-                if e.type == pygame.QUIT:
-                    safe_exit()
-                if e.type == KEYDOWN:
-                    if e.key == 27:  # For escape key
-                        self.startup_text_run = False
-                    if e.key == K_RETURN:
-                        counter += 1
-                if e.type==mesh.CONNECT :
-                    game_sharing.sharing_handler(e.type,None,'')
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,None,'']).start()
-                elif e.type==mesh.PARTICIPANT_ADD or e.type==mesh.PARTICIPANT_REMOVE :
-                    game_sharing.sharing_handler(e.type,e.handle,'')
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,'']).start()
-                elif e.type==mesh.MESSAGE_MULTI or e.type==mesh.MESSAGE_UNI :
-                    game_sharing.sharing_handler(e.type,e.handle,e.content)
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,e.content]).start()
-
+        if soundtrack:
+            soundtrack.play(-1)
             
-            if model.global_time >= 5000:
-                first_display = False                
-                model.global_time = 0
-                counter += 1
-            if not first_display:
-                
-                threades.screen.fill((255,255,255))
-                threades.screen.blit(hunger_map,threades.resize_pos((0,0)))
-                desktop2.update()
-                desktop2.draw()
-                pygame.display.flip()
-                
-            if counter == len(texts.trailer_text):
-                self.startup_text_run = False
-            
-            
-            
-        
-            model.iteration_time = clock.tick()
-            model.global_time += model.iteration_time
-        win.close()
-
-        
+               
         self.run = False
 
     def turnoff_startup_run(self,button = None):
         
         self.startup_text_run = False
+    
+    def resume_saved_level(self,button = None):
+        '''Resumes saved level'''
+        
+        threades.resume_game()
+        self.remove_buttons()
+        self.run = False
+        
+    def save_current_level(self,button = None):
+        '''Saves the current level'''
+        threades.current_level = proceduralFlow.storyboard_level
+        threades.save_game()
+        self.remove_buttons()
+        self.run = False
+        
         
     def resume(self,button = None):
         ''' Resumes Game
@@ -567,7 +559,7 @@ class starting_intro:
         self.win.onClose = lambda button: self.main_menu(self.pause_flag)
         self.win.surf.set_alpha(140)
 
-        control_text = """\n\n  Setup Facility           :       s \n\n  Upgrade Facility       :       u \n\n  Buy/Sell                    :       b \n\n  Scroll threades.screen up       :       up arrow \n\n  Scroll threades.screen down   :       down arrow \n\n  Scroll threades.screen left      :       left arrow \n\n  Scroll threades.screen right    :       right arrow """
+        control_text = """\n\n  Build           :       s \n\n  Upgrade       :       u \n\n  Market                    :       b \n\n  Scroll threades.screen up       :       up arrow \n\n  Scroll threades.screen down   :       down arrow \n\n  Scroll threades.screen left      :       left arrow \n\n  Scroll threades.screen right    :       right arrow """
         myfont2 = pygame.font.Font("font.ttf", threades.resize_pt(25))
         labelStyleCopy = gui.defaultLabelStyle.copy()
         labelStyleCopy['border-width'] = 1
@@ -576,9 +568,9 @@ class starting_intro:
         labelStyleCopy['font'] = myfont2
         labelStyleCopy['font-color'] = self.lightgreen_color
         labelStyleCopy['border-color'] = self.black_color
-        self.message_label = gui.Label(position = threades.resize_pos((80,80),(600.0,600.0),self.win.size),size = threades.resize_pos((240,70),(600.0,600.0),self.win.size), parent = self.win, text = "Setup Facility ", style = labelStyleCopy)
-        self.message_label = gui.Label(position = threades.resize_pos((80,130),(600.0,600.0),self.win.size),size = threades.resize_pos((240,70),(600.0,600.0),self.win.size), parent = self.win, text = "Upgrade Facility ", style = labelStyleCopy)
-        self.message_label = gui.Label(position = threades.resize_pos((80,180),(600.0,600.0),self.win.size),size = threades.resize_pos((240,70),(600.0,600.0),self.win.size), parent = self.win, text = "Buy/Sell ", style = labelStyleCopy)
+        self.message_label = gui.Label(position = threades.resize_pos((80,80),(600.0,600.0),self.win.size),size = threades.resize_pos((240,70),(600.0,600.0),self.win.size), parent = self.win, text = "Build ", style = labelStyleCopy)
+        self.message_label = gui.Label(position = threades.resize_pos((80,130),(600.0,600.0),self.win.size),size = threades.resize_pos((240,70),(600.0,600.0),self.win.size), parent = self.win, text = "Upgrade ", style = labelStyleCopy)
+        self.message_label = gui.Label(position = threades.resize_pos((80,180),(600.0,600.0),self.win.size),size = threades.resize_pos((240,70),(600.0,600.0),self.win.size), parent = self.win, text = "Market ", style = labelStyleCopy)
         self.message_label = gui.Label(position = threades.resize_pos((80,230),(600.0,600.0),self.win.size),size = threades.resize_pos((240,70),(600.0,600.0),self.win.size), parent = self.win, text = "Scroll Screen up ", style = labelStyleCopy)
         self.message_label = gui.Label(position = threades.resize_pos((80,280),(600.0,600.0),self.win.size),size = threades.resize_pos((240,70),(600.0,600.0),self.win.size), parent = self.win, text = "Scroll Screen down", style = labelStyleCopy)
         self.message_label = gui.Label(position = threades.resize_pos((80,330),(600.0,600.0),self.win.size),size = threades.resize_pos((240,70),(600.0,600.0),self.win.size), parent = self.win, text = "Scroll Screen left ", style = labelStyleCopy)
@@ -621,16 +613,16 @@ class starting_intro:
                     if e.key == 27:  # For escape key
                         self.controls_run = False
                         self.win.close()
-
-                if e.type==mesh.CONNECT :
-                    game_sharing.sharing_handler(e.type,None,'')
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,None,'']).start()
-                elif e.type==mesh.PARTICIPANT_ADD or e.type==mesh.PARTICIPANT_REMOVE :
-                    game_sharing.sharing_handler(e.type,e.handle,'')
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,'']).start()
-                elif e.type==mesh.MESSAGE_MULTI or e.type==mesh.MESSAGE_UNI :
-                    game_sharing.sharing_handler(e.type,e.handle,e.content)
-                #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,e.content]).start()
+                if model.FLAG_XO:
+                    if e.type==mesh.CONNECT :
+                        game_sharing.sharing_handler(e.type,None,'')
+                    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,None,'']).start()
+                    elif e.type==mesh.PARTICIPANT_ADD or e.type==mesh.PARTICIPANT_REMOVE :
+                        game_sharing.sharing_handler(e.type,e.handle,'')
+                    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,'']).start()
+                    elif e.type==mesh.MESSAGE_MULTI or e.type==mesh.MESSAGE_UNI :
+                        game_sharing.sharing_handler(e.type,e.handle,e.content)
+                    #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,e.content]).start()
 
                 
             desktop2.update()
@@ -651,9 +643,15 @@ class starting_intro:
         win = gui.Window(position = (0,0), size = (100,100), parent = desktop2)
         if self.pause_flag:
             self.start_button._set_parent(win)
+            if self.init_game_save_flag:
+                self.resume_saved_level_button._set_parent(win)
+                self.init_game_save_flag = False    
         else:
             self.resume_button._set_parent(win)
-
+            if proceduralFlow.storyboard_level !=1:
+                self.save_button._set_parent(win)
+            
+        
         self.controls_button._set_parent(win)
         self.exit_button._set_parent(win)
         self.about_us_button._set_parent(win)
@@ -668,7 +666,7 @@ def pause_screen(pause_flag = True):
 
     start = starting_intro()
 
-    start.main_menu(pause_flag)
+    start.main_menu(pause_flag,threades.game_save_flag)
     logo =  pygame.image.load(os.path.join('data', 'logo.png')).convert()
     ff_logo = pygame.transform.scale(logo,threades.resize_pos((1111,250)))
     while start.run:
@@ -681,16 +679,6 @@ def pause_screen(pause_flag = True):
                 safe_exit()
             if e.type == QUIT:
                 safe_exit()
-            if e.type==mesh.CONNECT :
-                game_sharing.sharing_handler(e.type,None,'')
-            #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,None,'']).start()
-            elif e.type==mesh.PARTICIPANT_ADD or e.type==mesh.PARTICIPANT_REMOVE :
-                game_sharing.sharing_handler(e.type,e.handle,'')
-            #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,'']).start()
-            elif e.type==mesh.MESSAGE_MULTI or e.type==mesh.MESSAGE_UNI :
-                game_sharing.sharing_handler(e.type,e.handle,e.content)
-            #sharing_thread = threading.Thread(target = game_sharing.sharing_handler, args=[e.type,e.handle,e.content]).start()
-
 
         desktop2.update()
         desktop2.draw()
@@ -699,31 +687,93 @@ def pause_screen(pause_flag = True):
 
 wfp_logo = pygame.image.load(os.path.join('data', 'top.png')).convert()
 surface_top = pygame.transform.scale(wfp_logo,threades.resize_pos((1200,40)))
-   
+
+def facility_placement():
+    (x,y) = (0,0)
+    x,y = pygame.mouse.get_pos()
+    gui_buttons.gui_obj.setup_button.enabled = False
+    facility_name = threades.buildFacilityPlacementFlag
+    
+    for i in range(len(model.Facility_Size)):
+        if model.Facility_Size[i][0] == facility_name:
+            height = model.Facility_Size[i][1]
+            width = model.Facility_Size[i][2]
+            
+            height_temp = threades.resize_pt_y((model.Facility_Size[i][1])*threades.transform_obj.ratio)
+            width_temp = threades.resize_pt_x((model.Facility_Size[i][2])*threades.transform_obj.ratio)
+            
+    
+    if x > threades.resize_pt_x(930):    
+        pygame.mouse.set_pos(threades.resize_pt_x(930),y)
+    if y > threades.resize_pt_y(600):
+        pygame.mouse.set_pos(x,threades.resize_pt_y(600))
+    
+    rect = (x,y,width,height)
+    rect_temp = (x,y,width_temp,height_temp)
+    rect_obj = pygame.Rect(rect)
+    rect_obj_temp = pygame.Rect(rect_temp)
+     
+    collide_check = threades.place_facility_collide_check(rect_obj)
+    if collide_check:
+        color = (205,0,0)
+    else:
+        color = (205,200,100)
+    pygame.draw.rect(threades.screen,color,rect_obj_temp,5)
+    
+    l,m,r = pygame.mouse.get_pressed()
+    if l == 1 and collide_check == False:
+        (a,b) = threades.transform_obj.inverse_trans_cordinate((x,y))
+        rect_obj_send = pygame.Rect((a,b,width_temp,height_temp))
+        PLACING_DATA_LIST = [threades.buildFacilityPlacementFlag,rect_obj_send] 
+        threades.build_placed_facility(threades.buildFacilityPlacementFlag,False,PLACING_DATA_LIST)
+        threades.set_build_facility_placement_flag()
+        gui_buttons.gui_obj.setup_button.enabled = True
+    if r == 1:
+        threades.set_build_facility_placement_flag()
+        gui_buttons.gui_obj.setup_button.enabled = True
+            
+update_thread = None
+message_thread = None
 def main():
 
     global panel
     global chat_screen
     global level_setting
+    global update_thread
+    global message_thread
     
+    cursor = pygame.cursors.load_xbm(os.path.join('art', 'ff2_cursor.xbm'),os.path.join('art', 'ff2_cursor-mask.xbm'))
+    #print cursor
+    pygame.mouse.set_cursor(cursor[0],cursor[1],cursor[2],cursor[3])
     # Displaying the WFP logo
     intro_thread = threading.Thread(target = load_images.load_images, args=[])
     intro_thread.start()
     # Loading and starting the sound play
-    soundtrack.play(-1)
-    level_setting=level_change.change_level()
-    pause_screen()
-
-    intro_thread.join()
-    threades.initialize_facilities()
-
-    #surface_middle = pygame.transform.scale(surface3,threades.resize_pos((1200,560)))
+    #level_setting=level_change.change_level()
+    threades.current_level = threades.check_saved_game_level()
     
-    # Processing regarding the storyboard
-    proceduralFlow.openStoryBoardFile()
-    storyboardObj = proceduralFlow.storyboardFlow()
-    proceduralFlow.openStoryBoardFile()
+    
+    
+    model.game_controller.reset_time()
+    
+    pause_screen()
+    intro_thread.join()
+    
+    
+        
+    
+    proceduralFlow.storyboard_level = threades.current_level
+    if threades.current_level != 1:
+        load_resume_game()
+    else:
+        threades.initialize_facilities(True)
+        proceduralFlow.openStoryBoardFile()
 
+     
+    # Processing regarding the storyboard
+    
+    storyboardObj = proceduralFlow.storyboardFlow()
+    
     gui_buttons.initialize_gui()
 
     threades.screen.fill((0,0,0))
@@ -731,34 +781,41 @@ def main():
     animation_obj = threades.Animation()
     animation_obj.update()
     # Starting of the threads
-    update_thread = threading.Thread(target = threades.update_turn, args=[]).start()
-    message_thread = threading.Thread(target = message_window, args=[]).start()
+    update_thread = threading.Thread(target = threades.update_turn, args=[])
+    update_thread.start()
+    #print update_thread
+    message_thread = threading.Thread(target = message_window, args=[])
+    message_thread.start()
     mouse_flag = False
     chat_screen=chat.chat()
         
-    model.game_controller.reset_time()
+    
     # The main infinite loop
     while True:
         #clock.tick()
-        model.game_controller.update_level_time()
+        model.game_controller.update_level_time(threades.update_thread_pause)
         
+        animation_obj.update()
+
 
         mouse_flag = False
             
         (x,y) = (0,0)
         x,y = pygame.mouse.get_pos()
         
-        if ((x < threades.new_screen_size[0]) and (x > (threades.new_screen_size[0]-60))):
-            threades.transform_obj.move_free((0,0))
+        if len(threades.buildFacilityPlacementFlag):
+            facility_placement()               
+        if (x > (threades.resize_pt_x(890)) and x < threades.resize_pt_x(930)):
+            threades.transform_obj.move_free((-10,0))
             
-        if (x < 60 and x > 0):
-            threades.transform_obj.move_free((0,0))
+        if x < threades.resize_pt_x(60) :
+            threades.transform_obj.move_free((10,0))
             
-        if (y < threades.resize_pt_y(900)) and (y > threades.resize_pt_y(840)):
-            threades.transform_obj.move_free((0,0))
+        if  y > threades.resize_pt_y(560) and y< threades.resize_pt_y(600):
+            threades.transform_obj.move_free((0,-10))
             
-        if ((y < threades.resize_pt_y(60)) and (y > threades.resize_pt_y(0))):
-            threades.transform_obj.move_free((0,0))
+        if y < threades.resize_pt_y(60):
+            threades.transform_obj.move_free((0,10))
             
         if (x > threades.resize_pt_x(0)) and (x < threades.resize_pt_x(600)) and (y > threades.resize_pt_y(845)) and (y < threades.resize_pt_y(900)):
             mouse_flag = True
@@ -769,18 +826,12 @@ def main():
             event_handling(e)
 
         
-        #pygame.draw.rect(threades.screen,(209,169,106),threades.resize_rect((0,40,1200,560)))
-        animation_obj.update()
+        
 
-
-        # Claculate indicators again
+        # Calculate the values of the indicators
         threades.calculate_indicators_starting()
         
-        #For middle surface
-        #surface_middle = pygame.transform.scale(surface3,threades.resize_pos((1200,560)))
-        #threades.screen.blit(surface_middle,threades.resize_pos((0,40)))
-
-        
+               
 
         
         rects_list = get_update_region()

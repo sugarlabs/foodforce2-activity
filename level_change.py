@@ -1,4 +1,23 @@
-
+#! /usr/bin/env python
+#
+#   Author : Mohit Taneja (mohitgenii@gmail.com)
+#   Date : 9/06/2008 
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+#
 import gui
 import pygame
 #from threades import *
@@ -56,11 +75,14 @@ class change_level:
             if self.run==False:
                 break
            
-        print 'now reached here\n'
+        #print 'now reached here\n'
         
             
         self.ff_logo = 0
-        threades.initialize_facilities()
+        threades.initialize_facilities(True)
+        threades.set_build_facility_placement_flag()
+        threades.facility_placement_data_obj.clear_placement_data()
+        #threades.current_level = proceduralFlow.storyboard_level
                 
         threades.total_update_flag = True
         threades.resume_update_thread()
@@ -160,10 +182,7 @@ class change_level:
         labelStyleCopy['font'] = myfont
         labelStyleCopy['font-color'] = (0,200,0)
         
-        if self.level_no==-1:
-            text1='Loading New Level...'
-        else:
-            text1='Loading Level No:'+str(self.level_no)
+        text1='Loading....'
             
         #creating the label
         label = gui.Label(position = threades.resize_pos((500,600)), size = threades.resize_pos((250,50)), parent = desktop_level,style=labelStyleCopy,text=text1)

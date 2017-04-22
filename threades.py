@@ -35,64 +35,143 @@ pygame.init()
 #from load_images import *
 import game_events
 import load_images
+import pickle
+#import proceduralFlow
 
 
-original_screen_size = (1200.0,900.0)
+original_screen_size = [1200.0,900.0]
 
 import gui
 #from gui import *
 import defaultStyle
 
 
-# Detecting the current screen resolution of the device
-display_info = pygame.display.Info()
-new_screen_size = (display_info.current_w,display_info.current_h)
-# Max resolution detected and the screen size is set to it
+pygame.display.init()
+
+try:
+
+    display_info = pygame.display.Info()
+    new_screen_size = [display_info.current_w,display_info.current_h]
+    
+except:
+    
+    new_screen_size = [800,600]
+    
+#new_screen_size = [800,600]
+
+global screen   
+if model.FLAG_XO:
+    global screen
+    new_screen_size[1] -= 80.0/900.0*new_screen_size[1]
+    screen = pygame.display.set_mode(new_screen_size,SRCALPHA,32)
+else:
+    
+    screen = pygame.display.set_mode(new_screen_size,FULLSCREEN|SRCALPHA,32)
+    #screen = pygame.display.set_mode(new_screen_size,SRCALPHA,32)
 
 
-new_screen_size = (1200.0,830.0)   # For testing purposes in a window
-screen = pygame.display.set_mode(new_screen_size,0|SRCALPHA,32)
-
-# For initialising the style of the guI
 defaultStyle.init(gui)
 
 desktop = gui.Desktop()
-# initializing values for constant
-#model.init_cons('data.pkl')
 
-#initializing objects
-#model.init_obj()
+###### FLAGS ####
+
+GAME_EXIT_FLAG = False
+# Facility placement flag
+buildFacilityPlacementFlag = ""
+
+# Level start Facility build flag 
+levelStartFacilityBuildFlag = 0
+levelStartUpdateFlag = True
 
 #Screen Initialization Flags
 total_update_flag = True
 panel_update_flag = True
 map_update_flag = True
 top_update_flag = True
-facilities_update_flag = True    
+facilities_update_flag = True   
+game_save_flag = False
+
+PLACING_LIST_TEMP = []
+current_level = 0
     
 
-def initialize_facilities():
+def initialize_facilities(autobuild_flag = True):
     
     model.ppl.change_total_population(1000)
+    global levelStartFacilityBuildFlag
+    global levelStartUpdateFlag
+    levelStartUpdateFlag = False
+    global PLACING_LIST_TEMP
+
     
-    for i in range(model.INIT_HOUSE):
-        build_facility(model.House)
-    for i in range(model.INIT_HOSPITAL):
-        build_facility(model.Hospital)
-    for i in range(model.INIT_SCHOOL):
-        build_facility(model.School)
-    for i in range(model.INIT_FARM):
-        build_facility(model.Farm)
-    for i in range(model.INIT_FOUNTAIN):
-        build_facility(model.Fountain)
-    for i in range(model.INIT_WORKSHOP):
-        build_facility(model.Workshop)
-        
+    
+    
+    #if level_flag == -1:
+        #PLACING_DATA_LIST = facility_placement_data_obj.read_placement_data()
+    #else:
+    PLACING_DATA_LIST = PLACING_LIST_TEMP
+    new_list = []
+    #PLACING_DATA_LIST = facility_placement_data_obj.read_placement_data()
+
+    HOUSE_NO = model.INIT_HOUSE
+    #print HOUSE_NO
+    HOSP_NO = model.INIT_HOSPITAL
+    #print HOSP_NO
+    SCHOOL_NO = model.INIT_SCHOOL
+    #print SCHOOL_NO
+    FARM_NO = model.INIT_FARM
+    #print FARM_NO
+    FOUNTAIN_NO = model.INIT_FOUNTAIN
+    #print FOUNTAIN_NO
+    WORKS_NO = model.INIT_WORKSHOP
+    #print WORKS_NO
+    
+    #levelStartFacilityBuildFlag = HOUSE_NO + HOSP_NO + SCHOOL_NO + FARM_NO + FOUNTAIN_NO + WORKS_NO
+    #print "level start val = "
+    #print levelStartFacilityBuildFlag
+    
+    for i in range(len(PLACING_DATA_LIST)):
+        if PLACING_DATA_LIST[i][0] == 'HOUSE' and HOUSE_NO>0:
+            build_facility(model.House,PLACING_DATA_LIST = PLACING_DATA_LIST[i], autobuild_flag = autobuild_flag)
+            HOUSE_NO = HOUSE_NO -1
+            levelStartFacilityBuildFlag +=1
+            new_list.append(PLACING_DATA_LIST[i])
+            
+        if PLACING_DATA_LIST[i][0] == 'HOSPITAL' and HOSP_NO>0:
+            build_facility(model.Hospital,PLACING_DATA_LIST[i], autobuild_flag = autobuild_flag)
+            HOSP_NO = HOSP_NO -1
+            levelStartFacilityBuildFlag +=1
+            new_list.append(PLACING_DATA_LIST[i])
+            
+        if PLACING_DATA_LIST[i][0] == 'SCHOOL' and SCHOOL_NO>0:
+            build_facility(model.School,PLACING_DATA_LIST[i], autobuild_flag = autobuild_flag)
+            SCHOOL_NO = SCHOOL_NO -1
+            levelStartFacilityBuildFlag +=1
+            new_list.append(PLACING_DATA_LIST[i])
+            
+        if PLACING_DATA_LIST[i][0] == 'FARM' and FARM_NO>0:
+            build_facility(model.Farm,PLACING_DATA_LIST[i], autobuild_flag = autobuild_flag)
+            FARM_NO = FARM_NO -1
+            levelStartFacilityBuildFlag +=1
+            new_list.append(PLACING_DATA_LIST[i])
+            
+        if PLACING_DATA_LIST[i][0] == 'FOUNTAIN' and FOUNTAIN_NO>0:
+            build_facility(model.Fountain,PLACING_DATA_LIST[i], autobuild_flag = autobuild_flag)
+            FOUNTAIN_NO = FOUNTAIN_NO -1
+            levelStartFacilityBuildFlag +=1
+            new_list.append(PLACING_DATA_LIST[i])
+            
+        if PLACING_DATA_LIST[i][0] == 'WORKSHOP' and WORKS_NO>0:
+            build_facility(model.Workshop,PLACING_DATA_LIST[i], autobuild_flag = autobuild_flag)
+            WORKS_NO = WORKS_NO -1
+            levelStartFacilityBuildFlag +=1
+            new_list.append(PLACING_DATA_LIST[i])
+  
+    #reload_placing_data_list()
     model.ppl.change_total_population(-1000)
     
-    #model.Water.set_variables('WATER',model.INIT_WATER,model.INIT_M_WATER,model.COST_WATER)
-    #model.Buildmat.set_variables('BUILDING MATERIAL',model.INIT_BUILDMAT,model.INIT_M_BUILDMAT,model.COST_BUILDMAT)
-    #model.Tools.set_variables('TOOLS',model.INIT_TOOLS,model.INIT_M_TOOLS,model.COST_TOOLS)
+    PLACING_LIST_TEMP = new_list
     transform_obj.focus_at((1000,2000))
     transform_obj.set_ratio(0.5)
     calculate_indicators_starting()
@@ -108,12 +187,19 @@ update_thread_pause = True
 
 ''' Utility Functions '''
 
-def stop_facility(facility_obj):
+#def reload_placing_data_list():
+    #placing_list = []
+    #placing_list = PLACING_LIST_TEMP
+    #placing_list 
+
+def stop_facility(facility_obj,name_res = ''):
     ''' Thread to stop a facility it resumes the facility when the village
     has enough model.resources to run the facility
     '''
+    #print name_res
     #global model.resources
-    message.push_message('Facility '+model.FACILITY_NAMES[facility_obj.get_name()]+' has been temporarily stopped due to insufficient resources to run the facility','high')
+    
+    message.push_message('Facility '+model.FACILITY_NAMES[facility_obj.get_name()]+' has been temporarily stopped due to insufficient '+str.lower(name_res)+' to run the facility','high')
     event = game_events.Event(type = game_events.STOPFACILITYEVENT, facility_name = facility_obj.get_name())
     game_events.EventQueue.add(event)
     res_cost = facility_obj.get_consumption()
@@ -129,7 +215,15 @@ def stop_facility(facility_obj):
                     a=1
         if a==0:
             break
-        sleep(2)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        
 
     facility_obj.resume_facility()
     message.push_message('Facility '+model.FACILITY_NAMES[facility_obj.get_name()]+' has been resumed','low')
@@ -148,7 +242,7 @@ def get_setup_text(facility_obj):
     text += str(int(facility_obj.get_level()))
     text +='\n'
     cost_build = facility_obj.get_cost_build()
-    text +='Resources required to build :  BUILDING MATERIAL:'+str(int(cost_build['BUILDING MATERIAL']))+' TOOLS :'+str(int(cost_build['TOOLS']))+' WATER :'+str(int(cost_build['WATER']))+'\n'
+    text +='Resources required to build :  BRICKS:'+str(int(cost_build['BUILDING MATERIAL']))+' TOOLS :'+str(int(cost_build['TOOLS']))+' WATER :'+str(int(cost_build['WATER']))+'\n'
     cost_run = facility_obj.get_cons_dict()
     if cost_run:
         text +='Resources required to run : '
@@ -161,7 +255,18 @@ def get_setup_text(facility_obj):
             text +=str(int(model.FACILITY_MANP_DICT_RUN[facility_obj.get_name()][key]))
     else:
         text += '0'
+
+    rem_build_mat = int(model.resources[1].get_vquantity()) - int(cost_build['BUILDING MATERIAL'])
+    rem_tools = int(model.resources[2].get_vquantity()) - int(cost_build['TOOLS'])
+    rem_water = int(model.resources[0].get_vquantity()) - int(cost_build['WATER'])
     
+    if rem_build_mat < 0 or rem_tools < 0 or rem_water < 0 :
+        text += '\nInsufficient Resources available.\n'
+    
+    else:
+        text +='\nResources after building facility :  BRICKS:'+str(rem_build_mat)+' TOOLS :'+str(rem_tools)+' WATER :'+str(rem_water) + '\n'
+
+        
     return text
 
 def get_upgrade_text(facility_obj):
@@ -171,14 +276,170 @@ def get_upgrade_text(facility_obj):
         text += texts.upgrade_text[facility_obj.get_name()][facility_obj.get_level()]
         text += '\n'
         cost_upgrade = facility_obj.get_cost_inc_level()
-        text += 'Resources required to upgrade : BUILDING MATERIAL: '+str(int(cost_upgrade['BUILDING MATERIAL']))+' TOOLS: '+str(int(cost_upgrade['TOOLS']))
+        text += 'Resources required to upgrade :  BRICKS:'+str(int(cost_upgrade['BUILDING MATERIAL']))+' TOOLS :'+str(int(cost_upgrade['TOOLS']))
     else:
         text = 'You cannot upgrade the facility anymore, it has reached its maximum level'
+        return text
+    
+    rem_build_mat = int(model.resources[1].get_vquantity()) - int(cost_upgrade['BUILDING MATERIAL'])
+    rem_tools = int(model.resources[2].get_vquantity()) - int(cost_upgrade['TOOLS'])
+    
+    if rem_build_mat < 0 or rem_tools < 0 :
+        text += '\nInsufficient Resources available for upgrade.\n'
+    
+    else:
+        text +='\nResources after upgrading facility :  BRICKS:'+str(rem_build_mat)+' TOOLS :'+str(rem_tools) + '\n'
     
     return text
 
-def build_facility(facility_obj, list_food = model.DEF_FARM_PROD):
+
+class facility_placement_data:
+        
+    def __init__(self,data_file):
+        self.data_file = data_file
+        self.PLACING_LIST = []
+        self._PLACING_LIST_TEMP = []
+    def store_placement_data(self,PLACING_DATA_LIST):
+        self._PLACING_LIST_TEMP = PLACING_DATA_LIST
+        output = open(self.data_file,'ab')
+        pickle.dump(self._PLACING_LIST_TEMP,output)
+        output.close()
+        PLACING_LIST_TEMP.append(self._PLACING_LIST_TEMP)
+    def read_placement_data(self):
+        output = open(self.data_file,'rb')
+        while True:
+            try:
+                self._PLACING_LIST_TEMP = pickle.load(output)
+                self.PLACING_LIST.append(self._PLACING_LIST_TEMP)
+            except EOFError:
+                break
+        output.close()
+        return self.PLACING_LIST
+    
+    def clear_placement_data(self):
+            try:
+                output = open(self.data_file,'wb')
+                output.close()
+            except:
+                return
+
+    
+if model.FLAG_XO or model.FLAG_SOAS:
+    import olpcgames.util
+    facplace_file = os.path.join(olpcgames.util.get_activity_root(),'data','facplace.pkl')
+else:
+    facplace_file = 'facplace.pkl'
+facility_placement_data_obj = facility_placement_data(facplace_file)
+facility_placement_data_obj.clear_placement_data()
+
+def set_build_facility_placement_flag(facility_obj = None):
+    global buildFacilityPlacementFlag
+    if facility_obj:
+        buildFacilityPlacementFlag = facility_obj.get_name()
+    else :
+        buildFacilityPlacementFlag = ""
+    #print buildFacilityPlacementFlag
+    
+def build_placed_facility(facility_name, autobuild_flag, PLACING_DATA_LIST):
+    '''Builds the placed facility according to placed position
+    Args:
+     facility_obj: The to be built facility object
+     place_facility_thread: Thread for placing facility
+    '''
+    
+    
+    facility_name = PLACING_DATA_LIST[0]
+    rect_obj = PLACING_DATA_LIST[1]
+    
+    place_pos_x = rect_obj[0]
+    place_pos_y = rect_obj[1]
+        
+    if autobuild_flag == False:
+        facility_placement_data_obj.store_placement_data(PLACING_DATA_LIST)
+        
+        
+    if facility_name == 'HOUSE':
+        images_obj.initialize_facility('HOUSE')
+        sprite = House_sprite((place_pos_x,place_pos_y))
+        model.house_sprite_list.append(sprite)
+        
+    if facility_name == 'HOSPITAL':
+        images_obj.initialize_facility('HOSPITAL')
+        sprite = Hospital_sprite((place_pos_x,place_pos_y))
+        model.hospital_sprite_list.append(sprite)
+        
+    if facility_name == 'WORKSHOP':
+        images_obj.initialize_facility('WORKSHOP')
+        sprite = Workshop_sprite((place_pos_x,place_pos_y))
+        model.workshop_sprite_list.append(sprite)
+        
+    if facility_name == 'SCHOOL':
+        images_obj.initialize_facility('SCHOOL')
+        sprite = School_sprite((place_pos_x,place_pos_y))
+        model.school_sprite_list.append(sprite)
+        
+    if facility_name == 'FARM':
+        images_obj.initialize_facility('FARM')
+        sprite = Farm_sprite((place_pos_x,place_pos_y))
+        model.farm_sprite_list.append(sprite)
+        
+    if facility_name == 'FOUNTAIN':
+        images_obj.initialize_facility('FOUNTAIN')
+        sprite = Fountain_sprite((place_pos_x,place_pos_y))
+        model.fountain_sprite_list.append(sprite)
+    add_sprite_all(sprite)
+    add_sprite_facilities(sprite)
+    
+    # Generating villagers for each facility
+    speeds = [[2,0],[-2,0],[0,2],[0,-2]]
+    facility_obj = model.facilities_list[0]
+    for i in range(len(model.facilities_list)):
+        if model.facilities_list[i].get_name() == facility_name:
+            facility_obj = model.facilities_list[i]
+    for i in range(int(random.random()*5)):
+        #print attribute
+        dir = int(random.random()*4)
+        villager = Villager((place_pos_x-500,place_pos_y-500,place_pos_x+500,place_pos_y+500))
+        villager.set_speed(speeds[dir])
+        villager.add(villagers,all)
+        
+    check_collide_villager(sprite) # Function to check if a sprite collides with the position of a villager
+    
+        
+def place_facility_collide_check(rect_obj):
+    FACILITY_RECT_LIST = []
+    
+    (rect_obj[0],rect_obj[1]) = transform_obj.inverse_transform_cordinate((rect_obj[0],rect_obj[1]))
+    
+    
+    #offset settings
+    #rect_obj_temp[0] = rect_obj_temp[0] + 0
+    #rect_obj_temp[1] = rect_obj_temp[1] + 0
+    #rect_obj_temp[2] = rect_obj_temp[2] + 0
+    #rect_obj_temp[3] = rect_obj_temp[3] + 0
+    
+    market_rect = pygame.Rect(int(2800*(1200.0/new_screen_size[0])),int(2500*(900.0/new_screen_size[1])),int(516*(1200.0/new_screen_size[0])),int(600*(900.0/new_screen_size[1])))  
+    
+    for key in model.facilities_list_sprites.values():
+        for i in range(len(key)):
+            #print transform_obj.inverse_transform_rect(key[i].rect)
+            FACILITY_RECT_LIST.append(transform_obj.inverse_transform_rect(key[i].rect))
+            
+    result = rect_obj.collidelist(FACILITY_RECT_LIST)
+    if rect_obj.colliderect(market_rect):
+        result = 1
+        
+    if result == -1:
+        return False
+    else:
+        return True
+                                        
+    
+def build_facility(facility_obj, PLACING_DATA_LIST = [], list_food = model.DEF_FARM_PROD, autobuild_flag = False):
     ''' Thread to build a new building of any facility
+    Args:
+     facility_obj:Facility object to be built
+     list_food:??
     '''
     #global model.resources
     #global model.ppl
@@ -214,78 +475,28 @@ def build_facility(facility_obj, list_food = model.DEF_FARM_PROD):
         model.ppl = facility_obj.update_manp_res(model.ppl)
         
         
-    except Exceptions.Resources_Underflow_Exception:
-        text = 'You dont have enough resources to build the facility,  please try later'
-        message.push_message(text,'high')
+    except Exceptions.Resources_Underflow_Exception,args:
+        #print str(args)
+        if str(args) == 'BUILDING MATERIAL':
+            text = 'You dont have enough '+'Bricks'+' to build the facility,  please try later'
+        else:
+            text = 'You dont have enough '+str.lower(str(args))+' to build the facility,  please try later'
+#        message.push_message(text,'high')
         return text
     except Exceptions.Low_Manpower_Resources_Exception:
         text = 'You dont have enough manpower to build the facility, please try later'
-        message.push_message(text,'high')
+#        message.push_message(text,'high')
         return text
     except Exceptions.Maximum_Number_Reached:
         text = 'You cannot setup more buildings of this facility, try setting up some other facility'
-        message.push_message(text,'high')
+#        message.push_message(text,'high')
         return text
-    
-    
-    #model.ppl = facility_obj.build_end(model.ppl)
-    if facility_obj.get_name() == 'HOUSE':
-        images_obj.initialize_facility('HOUSE')
-        sprite = House_sprite()
-        model.house_sprite_list.append(sprite)
-        
-    if facility_obj.get_name() == 'HOSPITAL':
-        images_obj.initialize_facility('HOSPITAL')
-        sprite = Hospital_sprite()
-        model.hospital_sprite_list.append(sprite)
-        
-    if facility_obj.get_name() == 'WORKSHOP':
-        images_obj.initialize_facility('WORKSHOP')
-        sprite = Workshop_sprite()
-        model.workshop_sprite_list.append(sprite)
-        
-    if facility_obj.get_name() == 'SCHOOL':
-        images_obj.initialize_facility('SCHOOL')
-        sprite = School_sprite()
-        model.school_sprite_list.append(sprite)
-        
-    if facility_obj.get_name() == 'FARM':
-        images_obj.initialize_facility('FARM')
-        sprite = Farm_sprite()
-        model.farm_sprite_list.append(sprite)
-        
-    if facility_obj.get_name() == 'FOUNTAIN':
-        images_obj.initialize_facility('FOUNTAIN')
-        sprite = Fountain_sprite()
-        model.fountain_sprite_list.append(sprite)
-    add_sprite_all(sprite)
-    add_sprite_facilities(sprite)
-    
-    # Generating villagers for each facility
-    speeds = [[2,0],[-2,0],[0,2],[0,-2]]
-    for attribute in load_images.facility_villagers[facility_obj.get_name()][facility_obj.get_original_number()-1]:
-        #print attribute
-        dir = int(random.random()*4)
-        villager = Villager(attribute)
-        villager.set_speed(speeds[dir])
-        villager.add(villagers,all)
-    
-    
-    check_collide_villager(sprite) # Function to check if a sprite collides with the position of a villager
-    
-    event = game_events.Event(type = game_events.BUILDFACILITYEVENT, facility_name = facility_obj.get_name())
-    game_events.EventQueue.add(event)
-
+    if autobuild_flag == False:
+        set_build_facility_placement_flag(facility_obj)
+    else:
+        build_placed_facility("",True,PLACING_DATA_LIST)
     
     return 'Facility has been build'
-
-    
-    
-    
-
-    
-    
-    
 
 def check_collide_villager(sprite):
     ''' Checks if an installation collides with a position of a villager, If yes, then it deletes 
@@ -310,10 +521,17 @@ def check_collide_villager(sprite):
 
 
 def build_end_facility(facility_obj):
-    #global model.ppl
+    global levelStartFacilityBuildFlag
     model.ppl = facility_obj.build_end(model.ppl)
+    event = game_events.Event(type = game_events.BUILDFACILITYEVENT, facility_name = facility_obj.get_name())
+    game_events.EventQueue.add(event)
+    if levelStartFacilityBuildFlag > 0:
+        levelStartFacilityBuildFlag -= 1
+        if levelStartFacilityBuildFlag == 0:
+            model.resources = model.ppl.update_turn(model.resources,model.facilities_list)
+    #print "now ",facility_obj.get_name(),levelStartFacilityBuildFlag
+    calculate_indicators_starting()
     
-
 
 
 
@@ -328,19 +546,22 @@ def upgrade_facility(facility_obj):
             message.push_message(text,'high')
             return text
         text = 'You need to setup a facility first to upgrade it'
-        message.push_message(text,'high')
+#        message.push_message(text,'high')
         return text
         
     #global model.resources
     try:
         model.resources = facility_obj.update_level(model.resources,model.ppl)
-    except Exceptions.Resources_Underflow_Exception:
-        text =  "You don't have enough resources to upgrade the facility please try later"
-        message.push_message(text,'high')
+    except Exceptions.Resources_Underflow_Exception,args:
+        if str(args) == 'BUILDING MATERIAL':
+            text = 'You dont have enough '+'Bricks'+' to upgrade the facility,  please try later'
+        else:
+            text = 'You dont have enough '+str.lower(str(args))+' to upgrade the facility,  please try later'
         return text
+#        message.push_message(text,'high')
     except Exceptions.Maximum_Level_Reached:
         text =  'Facility has reached its maximum level you cant upgrade it now'
-        message.push_message(text,'high')
+#        message.push_message(text,'high')
         return text
     
     if facility_obj.get_name() == 'HOUSE':
@@ -394,15 +615,23 @@ def calculate_indicators_starting():
     for resource in model.food_resources:
         name = resource.get_name()
         if temp.has_key(name):
-            protiens += temp[name]['PROTIENS'] * resource.get_vquantity()
-            vitamins += temp[name]['VITAMINS'] * resource.get_vquantity()
-            fats += temp[name]['FATS'] * resource.get_vquantity()
+            quantity = int(resource.get_vquantity())
+            protiens += temp[name]['PROTIENS'] * quantity
+            vitamins += temp[name]['VITAMINS'] * quantity
+            fats += temp[name]['FATS'] * quantity
         
     
     food = protiens + vitamins + fats
-    protiens /= food
-    vitamins /= food
-    fats /= food
+    if food:
+            protiens /= food*0.6
+            if protiens>1:
+                protiens = 1
+            vitamins /= food*0.4
+            if vitamins>1:
+                vitamins = 1
+            fats /= food*0.6
+            if fats>1:
+                fats = 1
 
     model.Nutrition.turn({'PEOPLE FED' : ppl_fed_ratio , 'PROTIENS' : protiens , 'FATS' : fats , 'VITAMINS' : vitamins})
 
@@ -410,7 +639,9 @@ def calculate_indicators_starting():
     healthy_ppl_ratio = model.ppl.get_no_of_ppl_healthy()/model.ppl.get_total_population()
     nutrition = model.Nutrition.get_value()
     nutrition /= model.MAX_INDICATOR
-    water = model.Water.get_vquantity()/model.MAX_RES_VAL_VILLAGE
+    water = model.Water.get_vquantity()/1000.0
+    if water>1:
+        water =1
 
     model.Health.turn({'HEALTHY PEOPLE' : healthy_ppl_ratio , 'NUTRITION' : nutrition , 'WATER' : water})
 
@@ -450,12 +681,15 @@ def update_turn(delay = 15):
         if update_thread_pause == True:
 
             # updation of all facilities
+            global levelStartUpdateFlag
+            levelStartUpdateFlag = True
+    
             for i in range(len(model.facilities_list)):
                 try:
                     model.resources = model.facilities_list[i].turn(model.resources)
-                except Exceptions.Resources_Underflow_Exception:
+                except Exceptions.Resources_Underflow_Exception,args:
                     
-                    t = threading.Thread(target = stop_facility , args = [model.facilities_list[i]])
+                    t = threading.Thread(target = stop_facility , args = [model.facilities_list[i],str(args)])
                     t.start()
                 except Exceptions.Resources_Overflow_Exception:
                     pass 
@@ -491,6 +725,7 @@ def update_turn(delay = 15):
     
             # nutrition
             ppl_fed_ratio = model.ppl.get_no_of_ppl_fed()/model.ppl.get_total_population()
+            #print "ppl_fed_ratio",ppl_fed_ratio
             temp = model.FOOD_DIST_DICT_INIT
             protiens = 0.0
             vitamins = 0.0
@@ -498,23 +733,38 @@ def update_turn(delay = 15):
             for resource in model.food_resources:
                 name = resource.get_name()
                 if temp.has_key(name):
-                    protiens += temp[name]['PROTIENS'] * resource.get_vquantity()
-                    vitamins += temp[name]['VITAMINS'] * resource.get_vquantity()
-                    fats += temp[name]['FATS'] * resource.get_vquantity()
+                    quantity = int(resource.get_vquantity())
+                    #print "name, quantity of food resource",name,quantity
+                    protiens += temp[name]['PROTIENS'] * quantity
+                    vitamins += temp[name]['VITAMINS'] * quantity
+                    fats += temp[name]['FATS'] * quantity
                 
-            
+            #print "value of protiens,vitamins,fats",protiens,vitamins,fats
             food = protiens + vitamins + fats
-            protiens /= food
-            vitamins /= food
-            fats /= food
+            if food:
+                protiens /= food*0.6
+                if protiens>1:
+                    protiens = 1
+                vitamins /= food*0.4
+                if vitamins>1:
+                    vitamins = 1
+                fats /= food*0.6
+                if fats>1:
+                    fats = 1
+            #print "protiens,vitamins,fats",protiens,vitamins,fats
     
             model.Nutrition.turn({'PEOPLE FED' : ppl_fed_ratio , 'PROTIENS' : protiens , 'FATS' : fats , 'VITAMINS' : vitamins})
     
             # health
             healthy_ppl_ratio = model.ppl.get_no_of_ppl_healthy()/model.ppl.get_total_population()
+            #print "healthy_ppl_ratio",healthy_ppl_ratio
             nutrition = model.Nutrition.get_value()
             nutrition /= model.MAX_INDICATOR
-            water = model.Water.get_vquantity()/model.MAX_RES_VAL_VILLAGE
+            #print "nutrition",nutrition
+            water = model.Water.get_vquantity()/1000.0
+            if water>1:
+                water =1
+            #print "water",water
     
             model.Health.turn({'HEALTHY PEOPLE' : healthy_ppl_ratio , 'NUTRITION' : nutrition , 'WATER' : water})
     
@@ -532,8 +782,54 @@ def update_turn(delay = 15):
             ppl_emp = model.ppl.get_total_no_of_ppl_emp()/model.ppl.get_total_population()
             model.Training.turn({ 'LEVEL OF WORKSHOPS' : level , 'EMPLOYED PEOPLE IN WORKSHOP' : ppl_emp , 'EMPLOYED PEOPLE IN FARM' : ppl_emp , 'EMPLOYED PEOPLE IN HOSPITAL' : ppl_emp , 'EMPLOYED PEOPLE IN CONSTRUCTION' : ppl_emp })
 
-        sleep(delay)
-            
+            if GAME_EXIT_FLAG:
+                return
+                
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
+        sleep(1)
+        if GAME_EXIT_FLAG:
+            return
 
 
 
@@ -595,21 +891,22 @@ def buy_res(res,res_quantity):
     
     
     try:
-        #print "The initial value of model.resources with the village is" , model.resources[i].get_vquantity()
-        #print "The initial value of model.resources with the market is" , model.resources[i].get_mquantity()
-        quantity=res_quantity
+        #print "The initial value of model.resources with the village is" , res.get_vquantity()
+        #print "The initial value of model.resources with the market is" , res.get_mquantity()
+        quantity=int(res_quantity)
+        #print "quantity is",quantity,"price reqd is",res.get_price()
         #print 'initial model.money is'
         #print model.money.get_money()
         model.money = res.buy(quantity , model.money)
         #print 'final model.money is'
         #print model.money.get_money()
-        #print "The final value of model.resources with the village is" , model.resources[i].get_vquantity()
-        #print "The final value of model.resources with the market is" , model.resources[i].get_mquantity()
+        #print "The final value of model.resources with the village is" , res.get_vquantity()
+        #print "The final value of model.resources with the market is" , res.get_mquantity()
     except Exceptions.Money_Underflow_Exception:
         text ='You dont have enough money to buy this resource. Please change the quantity or try later'
         return text
-    except Exceptions.Resources_Underflow_Exception:
-        text ='The market doesnot have enough quantity to sell this resource to village'
+    except Exceptions.Resources_Underflow_Exception,args:
+        text ='The market does not have enough quantity to sell this resource to village'
         return text
     except Exceptions.Resources_Overflow_Exception:
         text ='The Village cannot store so much amount of resources you should try and use the money to buy some other resources '
@@ -638,17 +935,19 @@ def sell_res(res,res_quantity):
     
 
     try:
-        #print "The initial value of model.resources with the village is" , model.resources[i].get_vquantity()
-        #print "The initial value of model.resources with the market is" , model.resources[i].get_mquantity()
-        quantity=res_quantity
+        #print "The initial value of model.resources with the village is" , res.get_vquantity()
+        #print "The initial value of model.resources with the market is" , res.get_mquantity()
+        #print "the price is", res.get_price()
+        #print "quantity is",  res_quantity
+        quantity=int(res_quantity)
         model.money = res.sell(quantity , model.money)       
         #print 'final model.money is'
         #print model.money.get_money()
          
-        #print "The final value of model.resources with the village is" , model.resources[i].get_vquantity()
-        #print "The final value of model.resources with the market is" , model.resources[i].get_mquantity()
-    except Exceptions.Resources_Underflow_Exception:
-        text = 'The village doesnot have enough quantity to sell this resource to market'
+        #print "The final value of model.resources with the village is" , res.get_vquantity()
+        #print "The final value of model.resources with the market is" , res.get_mquantity()
+    except Exceptions.Resources_Underflow_Exception,args:
+        text = 'The village does not have enough quantity to sell this resource to market'
         return text
     except Exceptions.Resources_Overflow_Exception:
         text = 'The Village has sold the resource you demanded'
@@ -759,9 +1058,75 @@ def famine():
     sleep(90)
     model.Farm.resume_facility()
     
+if model.FLAG_XO or model.FLAG_SOAS:
+    import olpcgames.util
+    save_game_file = os.path.join(olpcgames.util.get_activity_root(),'data','save_game.pkl')
+else:
+    save_game_file = 'save_game.pkl'
+
+def save_game(data_file = save_game_file):
+    '''Used to save current level'''
+    global PLACING_LIST_TEMP
+    global current_level
+    global game_save_flag
+    game_save_flag = True
+    output = open(data_file,'wb')
+    pickle.dump(current_level,output)
+    #print model.get_global_time
+    pickle.dump(model.game_controller.get_global_time(),output)
+    pickle.dump(PLACING_LIST_TEMP,output)
+    output.close()
+    #print "game_saved"
+    
+def delete_saved_game(data_file = save_game_file):
+    '''Used to delete saved game data'''
+    global game_saved_flag
+    game_save_flag = False
+    output = open(data_file,'wb')
+    output.close()
+    
 
 
+def resume_game(data_file = save_game_file):
+    '''Used to resume a saved game'''
+    global PLACING_LIST_TEMP
+    global level_save_time
+    global game_save_flag
+    output = open(data_file,'rb')
+    level = pickle.load(output)
+    level_save_time = pickle.load(output)
+    model.game_controller.resume_game_time_update(level_save_time)
+    #print model.global_time
+    while True:
+        try:
+            PLACING_LIST_TEMP = pickle.load(output)
+            ##PLACING_LIST_TEMP.append(_PLACING_LIST_TEMP)
+            #print PLACING_LIST_TEMP
+        except EOFError:
+            break 
+    output.close()
+    #output = open(data_file,'wb')
+    #output.close()
+    game_save_flag = False
+    
+def check_saved_game_level(data_file = save_game_file):
+    '''Used to check the status of game, saved or unsaved'''
+    try:
+        output = open(data_file,'rb')
+    except:
+        return 1
+    global game_save_flag
+    try:
+        current_level = pickle.load(output)
+        game_save_flag = True       
+        return current_level
+    
+    except EOFError:
+        return 1
+    output.close()
 
+
+    
 # The messages Classes    
 class Messages:
     ''' Class which handles the messaging system
@@ -798,20 +1163,22 @@ class Messages:
     
 message = Messages()   # the Mesages class object 
 
+
 # NOW there are classes of animation and sprites here
 
 class Workshop_sprite(pygame.sprite.Sprite):
     
-    def __init__(self):
+    def __init__(self,(x,y)):
         pygame.sprite.Sprite.__init__(self)
         self.frame = 0
         self.ratio = transform_obj.ratio
         self.level = model.Workshop.get_level()
         self.built_flag = 0
-        transform_obj.focus_at(load_images.workshop_posn_list[model.Workshop.get_number()-1])
+        #transform_obj.focus_at(load_images.workshop_posn_list[model.Workshop.get_number()-1])
         self.image = load_images.Workshop_tiles_list[self.level][self.frame]
         self.rect = self.image.get_rect()
-        self.position = load_images.workshop_posn_list[model.Workshop.get_number()-1]
+        #self.position = load_images.workshop_posn_list[model.Workshop.get_number()-1]
+        self.position = (x,y)
         self.position_rect = self.rect.move(self.position)
         self.rect = self.rect.move(transform_obj.transform_cordinates(self.position))
         self.tile_time = 0
@@ -872,17 +1239,18 @@ class Workshop_sprite(pygame.sprite.Sprite):
   
 class House_sprite(pygame.sprite.Sprite):
     
-    def __init__(self):
+    def __init__(self,(x,y)):
         pygame.sprite.Sprite.__init__(self)
         # Saving tiles of all the upgrades in tiles_list
         self.frame = 0
         self.level = model.House.get_level()
         self.built_flag = 0
         self.ratio = transform_obj.ratio
-        transform_obj.focus_at(load_images.house_posn_list[model.House.get_number()-1])
+        #transform_obj.focus_at(load_images.house_posn_list[model.House.get_number()-1])
         self.image = load_images.House_tiles_list[self.level][self.frame]
         self.rect = self.image.get_rect()
-        self.position = load_images.house_posn_list[model.House.get_number()-1]
+        #self.position = load_images.house_posn_list[model.House.get_number()-1]
+        self.position = (x,y)
         self.position_rect = self.rect.move(self.position)
         self.rect = self.rect.move(transform_obj.transform_cordinates(self.position))
         self.tile_time = 0
@@ -899,15 +1267,15 @@ class House_sprite(pygame.sprite.Sprite):
                     build_end_facility(model.House)
                     self.built_flag = 1
             elif (self.frame >= 2 and self.level ==1) :
-                if (self.frame == 3 and self.built_flag == 0) :
+                if (self.frame == 2 and self.built_flag == 0) :
                     build_end_facility(model.House)
                     self.built_flag = 1
             elif (self.frame >= 2 and self.level ==2) :
-                if (self.frame == 3 and self.built_flag == 0) :
+                if (self.frame == 2 and self.built_flag == 0) :
                     build_end_facility(model.House)
                     self.built_flag = 1
             elif (self.frame >= 2 and self.level ==3) :
-                if (self.frame == 3 and self.built_flag == 0) :
+                if (self.frame == 2 and self.built_flag == 0) :
                     build_end_facility(model.House)
                     self.built_flag = 1
             else:
@@ -943,23 +1311,25 @@ class House_sprite(pygame.sprite.Sprite):
         
 class Hospital_sprite(pygame.sprite.Sprite):
     
-    def __init__(self):
+    def __init__(self,(x,y)):
         pygame.sprite.Sprite.__init__(self)
         # Saving tiles of all the upgrades in tiles_list
         self.frame = 0
         self.ratio = transform_obj.ratio
         self.level = model.Hospital.get_level()
         self.built_flag = 0
-        transform_obj.focus_at(load_images.hospital_posn_list[model.Hospital.get_number()-1])
+        #transform_obj.focus_at(load_images.hospital_posn_list[model.Hospital.get_number()-1])
         self.image = load_images.Hospital_tiles_list[self.level][self.frame]
         self.rect = self.image.get_rect()
-        self.position = load_images.hospital_posn_list[model.Hospital.get_number()-1]
+        #self.position = load_images.hospital_posn_list[model.Hospital.get_number()-1]
+        self.position = (x,y)
         self.position_rect = self.rect.move(self.position)
         self.rect = self.rect.move(transform_obj.transform_cordinates(self.position))
         self.tile_time = 0
         self.update_flag = True
 
     def update(self):
+        
         if self.tile_time < 2000:
             self.tile_time += model.iteration_time
         else:
@@ -970,15 +1340,15 @@ class Hospital_sprite(pygame.sprite.Sprite):
                     build_end_facility(model.Hospital)
                     self.built_flag = 1
             elif (self.frame >= 2 and self.level ==1) :
-                if (self.frame == 3 and self.built_flag == 0) :
+                if (self.frame == 2 and self.built_flag == 0) :
                     build_end_facility(model.Hospital)
                     self.built_flag = 1
             elif (self.frame >= 2 and self.level ==2) :
-                if (self.frame == 3 and self.built_flag == 0) :
+                if (self.frame == 2 and self.built_flag == 0) :
                     build_end_facility(model.Hospital)
                     self.built_flag = 1
             elif (self.frame >= 2 and self.level ==3) :
-                if (self.frame == 3 and self.built_flag == 0) :
+                if (self.frame == 2 and self.built_flag == 0) :
                     build_end_facility(model.Hospital)
                     self.built_flag = 1
             else:
@@ -1014,7 +1384,7 @@ class Hospital_sprite(pygame.sprite.Sprite):
         
 class School_sprite(pygame.sprite.Sprite):
     
-    def __init__(self):
+    def __init__(self,(x,y)):
         pygame.sprite.Sprite.__init__(self)
        # Saving tiles of all the upgrades in tiles_list
         
@@ -1023,10 +1393,11 @@ class School_sprite(pygame.sprite.Sprite):
         self.level = model.School.get_level()
         self.built_flag =0
         self.ratio = transform_obj.ratio
-        transform_obj.focus_at(load_images.school_posn_list[model.School.get_number()-1])
+        #transform_obj.focus_at(load_images.school_posn_list[model.School.get_number()-1])
         self.image = load_images.School_tiles_list[self.level][self.frame]
         self.rect = self.image.get_rect()
-        self.position = load_images.school_posn_list[model.School.get_number()-1]
+        #self.position = load_images.school_posn_list[model.School.get_number()-1]
+        self.position = (x,y)
         self.position_rect = self.rect.move(self.position)
         self.rect = self.rect.move(transform_obj.transform_cordinates(self.position))
         self.tile_time =0
@@ -1034,6 +1405,7 @@ class School_sprite(pygame.sprite.Sprite):
         
 
     def update(self):
+        
         if self.tile_time < 2000:
             self.tile_time += model.iteration_time
         else:
@@ -1044,15 +1416,15 @@ class School_sprite(pygame.sprite.Sprite):
                     build_end_facility(model.School)
                     self.built_flag = 1
             elif (self.frame >= 2 and self.level ==1) :
-                if (self.frame == 3 and self.built_flag == 0) :
+                if (self.frame == 2 and self.built_flag == 0) :
                     build_end_facility(model.School)
                     self.built_flag = 1
             elif (self.frame >= 2 and self.level ==2) :
-                if (self.frame == 3 and self.built_flag == 0) :
+                if (self.frame == 2 and self.built_flag == 0) :
                     build_end_facility(model.School)
                     self.built_flag = 1
             elif (self.frame >= 2 and self.level ==3) :
-                if (self.frame == 3 and self.built_flag == 0) :
+                if (self.frame == 2 and self.built_flag == 0) :
                     build_end_facility(model.School)
                     self.built_flag = 1
             else:
@@ -1088,16 +1460,17 @@ class School_sprite(pygame.sprite.Sprite):
  
 class Farm_sprite(pygame.sprite.Sprite):
     
-    def __init__(self):
+    def __init__(self,(x,y)):
         pygame.sprite.Sprite.__init__(self)
         # Saving tiles of all the upgrades in tiles_list
         self.frame = 0
         self.built_flag = 0
         self.ratio = transform_obj.ratio
-        transform_obj.focus_at(load_images.farm_posn_list[model.Farm.get_number()-1])
+        #transform_obj.focus_at(load_images.farm_posn_list[model.Farm.get_number()-1])
         self.image = load_images.Farm_tiles[0][self.frame]
         self.rect = self.image.get_rect()
-        self.position = load_images.farm_posn_list[model.Farm.get_number()-1]
+        #self.position = load_images.farm_posn_list[model.Farm.get_number()-1]
+        self.position = (x,y)
         self.position_rect = self.rect.move(self.position)
         self.rect = self.rect.move(transform_obj.transform_cordinates(self.position))
         self.tile_time = 0
@@ -1105,6 +1478,7 @@ class Farm_sprite(pygame.sprite.Sprite):
         
 
     def update(self):
+        
         
         if self.tile_time < 2000:
             self.tile_time += model.iteration_time
@@ -1149,16 +1523,17 @@ class Farm_sprite(pygame.sprite.Sprite):
     
 class Fountain_sprite(pygame.sprite.Sprite):
     
-    def __init__(self):
+    def __init__(self,(x,y)):
         pygame.sprite.Sprite.__init__(self)
         # Saving tiles of all the upgrades in tiles_list
         self.frame = 0
         self.built_flag = 0
-        transform_obj.focus_at(load_images.fountain_posn_list[model.Fountain.get_number()-1])
+        #transform_obj.focus_at(load_images.fountain_posn_list[model.Fountain.get_number()-1])
         self.ratio = transform_obj.ratio
         self.image = load_images.Fountain_tiles[0][self.frame]
         self.rect = self.image.get_rect()
-        self.position = load_images.fountain_posn_list[model.Fountain.get_number()-1]
+        #self.position = load_images.fountain_posn_list[model.Fountain.get_number()-1]
+        self.position = (x,y)
         self.position_rect = self.rect.move(self.position)
         self.rect = self.rect.move(transform_obj.transform_cordinates(self.position))
         self.tile_time = 0
@@ -1166,6 +1541,7 @@ class Fountain_sprite(pygame.sprite.Sprite):
         
 
     def update(self):
+        
         
         if self.tile_time < 2000:
             self.tile_time += model.iteration_time
@@ -1204,22 +1580,23 @@ class Fountain_sprite(pygame.sprite.Sprite):
         
 
 
-
 # The work for drawing the background
 #global back_image_level1
-'''
-global image_to_scale
-image_to_scale = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]
-global image_pos
-image_pos = []
-for num_ver in range(10):
-    for num_hor in range(12):
-        rect = Rect(num_hor*250 + 10, num_ver*250 + 10, 230, 230)
-        image_pos.append(rect)
+
+if not model.FLAG_XO:
+
+    global image_to_scale
+    image_to_scale = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]
+    global image_pos
+    image_pos = []
+    for num_ver in range(10):
+        for num_hor in range(12):
+            rect = Rect(num_hor*250 + 10, num_ver*250 + 10, 230, 230)
+            image_pos.append(rect)
 
 
 #Class to initialise the background
-class Environment2():
+class Environment2:
     
     def __init__(self):
         self.sheet = pygame.image.load(os.path.join('data','tileset2.png')).convert()
@@ -1270,7 +1647,7 @@ class Environment2():
                 self.pos_y += self.y_inc
             self.img_x += 1
             self.pos_x += self.x_inc
-'''
+
 
 class Environment(pygame.sprite.Sprite):
     
@@ -1283,7 +1660,7 @@ class Environment(pygame.sprite.Sprite):
     def update_background(self):
         
         screen.blit(self.tiles,(0,resize_pt_y(40)))
-        
+    
 
 
 class Build(pygame.sprite.Sprite):
@@ -1329,8 +1706,7 @@ def add_sprite_all(sprite):
 def add_sprite_facilities(sprite):
     sprite.add(facilities_group)    
 
-    
-    
+
 
 
 
@@ -1345,12 +1721,13 @@ class screen_sprite(pygame.sprite.Sprite):
 
 
 
-
 # The villager class
 class Villager(pygame.sprite.Sprite):
     
-    def __init__(self,(name,range_rect)):
+    def __init__(self,range_rect):
         pygame.sprite.Sprite.__init__(self)
+        names = ['Man','Woman','Boy','Girl']
+        name = names[int(random.random()*4)]
         self.dx = 2
         self.dy = 2
         self.update_flag = True
@@ -1494,12 +1871,10 @@ class Villager(pygame.sprite.Sprite):
         self.image = self.dtiles_final[self.frame]
         
     def get_attributes(self):
-        return (self.name,self.range)
+        return self.range
     def get_name(self):
         return self.name
     
-
-
 
 
 
@@ -1652,7 +2027,7 @@ class Transform:
     
     def focus_at(self,(x,y)):
         '''Used to focus at a particular position'''
-       # self.ratio = 0.6
+        #self.ratio = 0.6
         self.pos_x = int(x*self.ratio) -500
         self.pos_y = int(y*self.ratio) - 80
   
@@ -1661,6 +2036,52 @@ class Transform:
         newy = y*self.ratio - self.pos_y + resize_pt_y(40)
         return (int(newx),int(newy))
  
+    def inverse_transform_cordinate(self,(x,y)):
+        ''' Transform the Screen Cordinates to Village Cordinates
+        
+        Args:
+         x:int:x cordinate
+         y:int:y cordinate
+        Return:
+         newx:int:new x cordinate
+         newy:int:new y cordinate
+        '''
+        newx = ((x + self.pos_x)/self.ratio)*(1200.0/new_screen_size[0])
+        newy = ((y + self.pos_y - 40)/self.ratio)*(900.0/new_screen_size[1])
+        return(int(newx),int(newy))
+    
+    
+    def inverse_trans_cordinate(self,(x,y)):
+        ''' Transform the Screen Cordinates to Village Cordinates
+        
+        Args:
+         x:int:x cordinate
+         y:int:y cordinate
+        Return:
+         newx:int:new x cordinate
+         newy:int:new y cordinate
+        '''
+        newx = ((x + self.pos_x)/self.ratio)
+        newy = ((y + self.pos_y - resize_pt_y(40))/self.ratio)
+        return(int(newx),int(newy))
+    
+    def inverse_transform_rect(self,(x,y,w,z)):
+        ''' Transform the Screen Cordinates to Village Cordinates
+        
+        Args:
+         x:int:x cordinate
+         y:int:y cordinate
+        Return:
+         newx:int:new x cordinate
+         newy:int:new y cordinate
+        '''
+        newx = ((x + self.pos_x)/self.ratio)*(1200.0/new_screen_size[0])
+        newy = ((y + self.pos_y - 40)/self.ratio)*(900.0/new_screen_size[1])
+        neww = (w/self.ratio)*(1200.0/new_screen_size[0])
+        newz = (z/self.ratio)*(900.0/new_screen_size[1])
+        return(int(newx),int(newy),int(neww),int(newz))
+
+    
     def set_ratio(self,ratio):
         self.ratio = ratio
   
@@ -1671,9 +2092,15 @@ class Transform:
         surface = pygame.transform.scale(surface, (int(x),int(y)))
         return surface
     
+    def village_boundary_covered(self):
+        min_x =  int(self.pos_x/self.ratio)
+        min_y = int(self.pos_y/self.ratio)
+        max_x = int((self.pos_x+930) /self.ratio)
+        max_y = int((self.pos_y+560) /self.ratio)
+        return [min_x, min_y, max_x, max_y]
     
   
- 
+   
 class update_images:
     
     def __init__(self):
@@ -1937,35 +2364,39 @@ class update_images:
 
 
 images_obj = update_images()
-   
-
-
 
 class Animation:
     
     def __init__(self):
+       
         
         
         global env
-        env = Environment()
+        if model.FLAG_XO:
+            env = Environment()
+        else:
+            env = Environment2()
         env.update_background()
         mkt = Build('market.png',2800,2500)
         mkt.add(all,market)
     
     
+    
     def update(self):
         ''' Creates the final surface with the background and all and with the sprites too '''
-       
+        
         transform_obj.move()
         transform_obj.check_pos() 
         if natural_calamities:
+            #natural_calamities.clear(screen,self.background)
             natural_calamities.update()
         
-        check_sprite = screen_sprite()
         images_obj.update_images()
-        
+        check_sprite = screen_sprite()
+        #screen.blit(self.background,(0,resize_pt_y(40)))
+        #all_drawable.clear(screen,self.background)
         env.update_background()
-        #all_drawable.clear(screen,env.tiles)
+        
         all_drawable.empty()
         all.update()
         drawable_sprites = pygame.sprite.spritecollide(check_sprite,all,False)
@@ -1998,6 +2429,8 @@ class Animation:
         
         
         all_drawable.draw(screen)       
+        #if natural_calamities:
+            #natural_calamities.draw(screen)
         transform_obj.prev_ratio = transform_obj.ratio
  
 
@@ -2010,6 +2443,7 @@ all = pygame.sprite.RenderUpdates()
 facilities_group = pygame.sprite.Group()
 market = pygame.sprite.Group()
 transform_obj = Transform()
+#surface3 = pygame.surface.Surface((1200,560))
 all_drawable = pygame.sprite.RenderUpdates() 
 
 

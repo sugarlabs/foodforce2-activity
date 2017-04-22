@@ -1,3 +1,23 @@
+#! /usr/bin/env python
+#
+#   Author : Mohit Taneja (mohitgenii@gmail.com)
+#   Date : 9/06/2008 
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
 from sys import exit
 import os
 from time import *
@@ -72,7 +92,7 @@ class indicator_panel:
         self.labelstyle1['font-color'] = self.font_color
         self.labelstyle1['border-color'] = self.color_grey
         # Drawing main Indicator label
-        label = gui.Label(position = threades.resize_pos((900,600)),size = threades.resize_pos((300,45)), parent = threades.desktop, text = "      Indicators", style = self.labelstyle1)
+        label = gui.Label(position = threades.resize_pos((900,600)),size = threades.resize_pos((300,45)), parent = threades.desktop, text = "  Progress Bars", style = self.labelstyle1)
 
         #print " deawing indicator panel"
         
@@ -195,14 +215,14 @@ class resources_panel:
         self.time_label= gui.Label(position = threades.resize_pos((300,10)), parent = threades.desktop, text = 'Time Elapsed -:   '+'Level Just Started''      ', style = self.labelstyle4)
         self.value_labels = []
         # Drawing general model.resources list
-        list_gen_res = (' Water',' Building Materials',' Tools',' Medicines',' Books')
+        list_gen_res = (' Water',' Bricks',' Tools',' Medicines',' Books')
         for i in range(5):
             label = gui.Label(position = threades.resize_pos((400,645+35*i)),size = threades.resize_pos((200,35)), parent = threades.desktop, text = list_gen_res[i], style = self.labelstyle2)
             label = gui.Label(position = threades.resize_pos((605,649+35*i)), parent = threades.desktop, text = str(int(model.resources[i].get_vquantity())), style = self.labelstyle3)
             self.value_labels.append(label)
             
         # Drawing food model.resources list
-        list_food_res = (' Rice',' Fruit & Vegatables',' Beans',' Sugar',' Salt',' Oil')
+        list_food_res = (' Rice',' Fruit & Vegetables',' Beans',' Sugar',' Salt',' Oil')
         for i in range(6):
             label = gui.Label(position = threades.resize_pos((650,645+35*i)),size = threades.resize_pos((200,35)), parent = threades.desktop, text = list_food_res[i], style = self.labelstyle2)
             label = gui.Label(position = threades.resize_pos((855,649+35*i)), parent = threades.desktop, text = str(int(model.resources[i+5].get_vquantity())), style = self.labelstyle3)
@@ -353,7 +373,7 @@ class facilities_panel:
         self.labelstyle1['font-color'] = self.font_color
         #self.labelstyle1['bg-color'] = self.font_bg_color
         
-        self.list_titles = ('Houses ','Schools ','Hospitals ','Workshops ','Farms ','Wells ')
+        self.list_titles = ('Huts ','Schools ','Hospitals ','Workshops ','Farms ','Wells ')
         self.list_names = ('Number: ','Number: ','Number: ','Number: ','Number: ','Number: ')
         self.list_values1 = (model.House.get_number(),model.School.get_number(),model.Hospital.get_number(),model.Workshop.get_number(),model.Farm.get_number(),model.Fountain.get_number())
         self.list_values2 = (model.House.get_level(),model.School.get_level(),model.Hospital.get_level(),model.Workshop.get_level(),model.Farm.get_level(),model.Fountain.get_level())
@@ -408,13 +428,15 @@ class mini_map:
     
         if self.update_flag or threades.map_update_flag or threades.total_update_flag:
             threades.screen.blit(self.map,threades.resize_pos((930,390)))
-            posn = threades.resize_pos((930+int(3200/33.3),390+int(2600/28.57)))
+            posn = threades.resize_pos((930+int(3200/23.22),390+int(2600/24.80)))
             threades.screen.blit(load_images.Map_images[6],posn)
             for i in range(len(model.facilities_list)):
                 for j in range(model.facilities_list[i].get_original_number()):
-                    posn = threades.resize_pos((930+int(load_images.facilities_posn_list[i][j][0]/33.3),390+int(load_images.facilities_posn_list[i][j][1]/28.57)))
+                    posn = threades.resize_pos((930+int(model.facilities_list_sprites[model.facilities_list[i].get_name()][j].position[0]/23.22),390+int(model.facilities_list_sprites[model.facilities_list[i].get_name()][j].position[1]/24.80)))
                     threades.screen.blit(load_images.Map_images[i],posn)
-        
+        rect_draw = threades.transform_obj.village_boundary_covered()
+        rect_final = threades.resize_rect((930+rect_draw[0]/23.22, 390 + rect_draw[1]/24.80, (rect_draw[2]-rect_draw[0])/23.22, (rect_draw[3]-rect_draw[1])/24.80))
+        pygame.draw.rect(threades.screen, (47, 47, 255, 180), rect_final, 2)
         self.update_flag = False
     
 
