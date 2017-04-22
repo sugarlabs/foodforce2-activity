@@ -54,7 +54,7 @@ class change_level:
         
         pygame.display.set_caption('FoodForce2')
         threades.screen.fill((0,0,0))
-        threades.screen.blit(self.ff_logo,threades.resize_pos((40,50)))
+        threades.screen.blit(self.ff_logo,threades.resize_pos((40,90)))
         
         desktop_level.update()
         desktop_level.draw()
@@ -65,26 +65,25 @@ class change_level:
             for e in gui.setEvents(pygame.event.get()):
                 if e.type == pygame.QUIT:
                     print 'in pygame.quit'                    
-                    safe_exit()
+                    #safe_exit()
                 if e.type == QUIT:
                     print 'in quit'
-                    safe_exit()
+                    #safe_exit()
 
             #if level_updater.is_alive()==False:
                # self.run=False      GREAT THIS IS APPLICABLE ONLY WITH PYTHON 2.6, SO HAVE TO SEARCH SOME OTHER MEANS
             if self.run==False:
                 break
            
-        #print 'now reached here\n'
         
             
         self.ff_logo = 0
         threades.initialize_facilities(True)
         threades.set_build_facility_placement_flag()
-        threades.facility_placement_data_obj.clear_placement_data()
         #threades.current_level = proceduralFlow.storyboard_level
                 
         threades.total_update_flag = True
+        model.POPULATION_FACTOR = 0.5
         threades.resume_update_thread()
 
         
@@ -101,7 +100,7 @@ class change_level:
         model.fountain_sprite_list = []
 
         model.facilities_list_sprites = { 'HOUSE':model.house_sprite_list, 'HOSPITAL':model.hospital_sprite_list, 'FARM':model.farm_sprite_list, 'SCHOOL':model.school_sprite_list, 'WORKSHOP':model.workshop_sprite_list, 'FOUNTAIN':model.fountain_sprite_list}
-
+        model.POPULATION_FACTOR = 0.5
         
         
         local_list = threades.natural_calamities.sprites()
@@ -166,7 +165,7 @@ class change_level:
         
     def graphics(self):
         logo = pygame.image.load(os.path.join('data', 'logo.png')).convert()
-        self.ff_logo = pygame.transform.scale(logo,threades.resize_pos((1111,250)))
+        self.ff_logo = pygame.transform.scale(logo,threades.resize_pos((1128,171)))
         threades.screen.fill((0,0,0))
         threades.screen.blit(self.ff_logo,threades.resize_pos((40,50)))
 
@@ -182,10 +181,9 @@ class change_level:
         labelStyleCopy['font'] = myfont
         labelStyleCopy['font-color'] = (0,200,0)
         
-        text1='Loading....'
             
         #creating the label
-        label = gui.Label(position = threades.resize_pos((500,600)), size = threades.resize_pos((250,50)), parent = desktop_level,style=labelStyleCopy,text=text1)
+        label = gui.Label(position = threades.resize_pos((500,600)), size = threades.resize_pos((250,50)), parent = desktop_level,style=labelStyleCopy,text=model.text_file.loading_text[0])
         
         #self.run=True
         

@@ -35,7 +35,8 @@ import game_events
 #from chat import *
 import model
 import chat
-import texts
+#import texts_spa
+#import texts_eng
 #from Foodforce2 import Earthquake
 import natural_calamities
 import level_change
@@ -44,6 +45,7 @@ import defaultStyle
 load_level_obj = level_change.change_level()
 
 storyboardfile = None
+storyboard_file = ''
 GAME_END_FLAG = False
 
 # Event Types in case of non-event based conditions
@@ -325,9 +327,7 @@ class checkConditions:
         if not (self.timer == -1):
             self.time = 0
             self.init_days = model.game_controller.get_total_days()
-            #print "initial days = "
-            #print self.init_days
-
+            
     def checkConditions(self,events):
         ''' Returns 0/1/2 depending upon the state of conditions
             0 : The conditions are still being tested and the player has neither failed the mission nor has he passed it
@@ -337,12 +337,9 @@ class checkConditions:
 
         Flag = True
         if threades.levelStartFacilityBuildFlag > 0 or (not threades.levelStartUpdateFlag):
-            #print "levelstartfacilitybuildflage = ",threades.levelStartFacilityBuildFlag,"levelstartupdateflag",threades.levelStartUpdateFlag
             return 0
 
         for conditions in self.conditionslist:
-            #print 'Flag:',Flag
-            #print conditions.checkCondition(events)
             Flag = conditions.checkCondition(events) and Flag
 
         if self.closure == 'AND':
@@ -370,8 +367,6 @@ class checkConditions:
             self.init_days = model.game_controller.get_total_days()
         
         self.currentdays = model.game_controller.get_total_days()
-        #print "days = "
-        #print self.currentdays -self.init_days
         if self.currentdays >= self.timer + self.init_days:
             return True
         else:
@@ -418,6 +413,7 @@ class Actions:
         self.curentLevel = 1
         self.time = 0
         self.timer = 0
+        #print action.actionType
         if action.actionType == 1:
             self.Chat(action.data)
         if action.actionType == 2:
@@ -471,7 +467,7 @@ class Actions:
     def checkDelay(self):
         ''' To be called when checking the delay
         '''
-        timeElapsed = self.timerClock.tick()
+        timeElapsed = self.timerClock.tick(30)
         if not (timeElapsed>1000):
             self.time += timeElapsed
         if self.time < self.timer:
@@ -486,13 +482,14 @@ class Actions:
 
     def callEarthquake(self):
         natural_calamities.earthquake()
+        
 
     def loadNextLevel(self):
 
-        global storyboard_level
-
-        data_file = 'data'+str(storyboard_level+1)+'.pkl'
-        #print data_file
+        global storyboard_level   
+        data_file = os.path.join('storyboards',str(model.storyboard_file),'data','data'+str(storyboard_level+1)+'.pkl')
+               
+        model.game_controller.reset_time()
         graphics_file = 'graphics_layout.pkl'
         storyboard_level += 1
         load_level_obj.new_level_stats(data_file,graphics_file)
@@ -501,13 +498,14 @@ class Actions:
 
 
     def loadLevelAgain(self):
-        data_file = 'data'+str(storyboard_level)+'.pkl'
+        print "Number 2"
+        global storyboard_level
+        data_file = os.path.join('storyboards',str(model.storyboard_file),'data','data'+str(storyboard_level)+'.pkl')
+                
         graphics_file = 'graphics_layout.pkl'
         load_level_obj.new_level_stats(data_file,graphics_file)
-        #print "StoryBoard level : "
-        #print storyboard_level
         # Seeking in the storyboard to the current level
-
+        model.game_controller.reset_time()
         closeStoryBoardFile()
         openStoryBoardFile()
         lev = 1
@@ -550,7 +548,7 @@ class Actions:
 
         st_desktop = gui.Desktop()
         clock = pygame.time.Clock()
-        clock.tick()
+        clock.tick(30)
 
         # Calculating position and size of window from the size of the threades.desktop
         position_win =threades.resize_pos((150.0,100.0))
@@ -590,7 +588,7 @@ class Actions:
                     if e.key == 27:  # For escape key
                         self.storyboardwin_run = False
 
-            gl_time += clock.tick()
+            gl_time += clock.tick(30)
             if gl_time >= 17000:
                 self.storyboardwin_run = False
 
@@ -626,7 +624,7 @@ class Actions:
 
         st_desktop = gui.Desktop()
         clock = pygame.time.Clock()
-        clock.tick()
+        clock.tick(30)
 
         # Calculating position and size of window from the size of the threades.desktop
         position_win =threades.resize_pos((150.0,100.0))
@@ -673,7 +671,7 @@ class Actions:
                     if e.key == 27:  # For escape key
                         self.storyboardwin_run = False
 
-            gl_time += clock.tick()
+            gl_time += clock.tick(30)
             if gl_time >= 17000:
                 self.storyboardwin_run = False
 
@@ -702,7 +700,7 @@ class Actions:
 
         st_desktop = gui.Desktop()
         clock = pygame.time.Clock()
-        clock.tick()
+        clock.tick(30)
 
         # Calculating position and size of window from the size of the threades.desktop
         position_win =threades.resize_pos((150.0,100.0))
@@ -734,7 +732,7 @@ class Actions:
         st_desktop.update()
         st_desktop.draw()
         pygame.display.update()
-
+        
         while self.storyboardwin_run:
             pygame.display.set_caption('FoodForce2')
 
@@ -742,8 +740,11 @@ class Actions:
                 if e.type == KEYDOWN:
                     if e.key == 27:  # For escape key
                         self.storyboardwin_run = False
-
-            gl_time += clock.tick()
+                #if e.type == MOUSEBUTTONDOWN:
+                    #if e.button == 1:
+                        #self.storyboardwin_run = False
+                    
+            gl_time += clock.tick(30)
             if gl_time >= 17000:
                 self.storyboardwin_run = False
 
@@ -772,7 +773,7 @@ class Actions:
 
         st_desktop = gui.Desktop()
         clock = pygame.time.Clock()
-        clock.tick()
+        clock.tick(30)
 
         # Calculating position and size of window from the size of the threades.desktop
         position_win =threades.resize_pos((150.0,100.0))
@@ -797,7 +798,7 @@ class Actions:
         self.storyboardwin_run = True
         #logo =  pygame.image.load(os.path.join('data', 'logo.png')).convert()
         #ff_logo = pygame.transform.scale(logo,threades.resize_pos((1111,250)))
-        text = texts.credits_text
+        text = model.text_file.credits_text
         #self.instructions_counter = 0
         label = gui.Label(position = threades.resize_pos((100.0,100.0),(900.0,500.0),self.win.size),size = threades.resize_pos((700.0,380.0),(900.0,500.0),self.win.size), parent = self.win, text = text, style = labelStyleCopy)
 
@@ -819,7 +820,7 @@ class Actions:
                     if e.key == 27:  # For escape key
                         self.storyboardwin_run = False
 
-            gl_time += clock.tick()
+            gl_time += clock.tick(30)
             if gl_time >= 17000:
                 self.storyboardwin_run = False
 
@@ -831,13 +832,16 @@ class Actions:
 
 # Storyboard Related Functions
 
-def openStoryBoardFile(file = 'storyboard.pkl'):
+def openStoryBoardFile():
 
     global storyboardfile
-    storyboardfile = open('storyboard.pkl','rb')
+    global storyboard_file_name
+    if model.storyboard_file != '':
+        storyboardfile = open(os.path.join('storyboards',model.storyboard_file,'storyboard_'+model.select_lang_flag+'.pkl'),'rb')
 
 def closeStoryBoardFile():
-    storyboardfile.close()
+    if model.storyboard_file != '':
+        storyboardfile.close()
 
 
 # Functions to handle events and conditions
@@ -857,6 +861,7 @@ class storyboardFlow:
         events_list = game_events.EventQueue.get_events()
 
         if self.actionRunningFlag:
+            
             if not self.action.timer == 0:
                 self.action.checkDelay()
             for event in events_list:
@@ -864,7 +869,6 @@ class storyboardFlow:
                     self.actionRunningFlag = False
 
         elif self.conditionTestingFlag:
-
             if self.checkConditionsObj.checkConditions(events_list) == 1:
                 self.prevConditionResult = 1
                 self.conditionTestingFlag = False
@@ -873,11 +877,13 @@ class storyboardFlow:
                 self.conditionTestingFlag = False
 
         else:
-
+            
             try:
                 variable = pickle.load(storyboardfile)
                 if variable[0] == 'action':
                     tempAction = actionTemplate(variable[1][0],variable[1][1])
+                    if tempAction.actionType == 1:
+                        tempAction.data[1] = os.path.join(str(model.storyboard_file),'images','chat images',tempAction.data[1])
                     self.action = Actions(tempAction)
                     self.actionRunningFlag = True
                     self.norConditionFlag = False
@@ -893,18 +899,18 @@ class storyboardFlow:
 
                 if self.norConditionFlag:
                     if (variable[0] == 'actionTrue') and (self.prevConditionResult == 1):
-
+                        
                         tempAction = actionTemplate(variable[1][0],variable[1][1])
                         self.action = Actions(tempAction)
                         self.actionRunningFlag = True
 
                     if (variable[0] == 'actionFalse') and (self.prevConditionResult == 2):
-
+                        
                         tempAction = actionTemplate(variable[1][0],variable[1][1])
                         self.action = Actions(tempAction)
                         self.actionRunningFlag = True
 
 
             except EOFError:
-                self.action.showCredentials()
+                self.action.showCredits()
 

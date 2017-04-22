@@ -26,7 +26,8 @@ from time import *
 import threades
 import threading
 import game_events
-import texts
+#import texts_eng
+#import texts_spa
 import model
 import gui_buttons
 import random
@@ -38,13 +39,15 @@ class Earthquake(pygame.sprite.Sprite):
     def __init__(self):
 
         pygame.sprite.Sprite.__init__(self)
-        mask= pygame.surface.Surface((1200,560),SRCALPHA)
-        mask.fill((0,0,0))
-        mask.set_alpha(0)
+        mask= pygame.surface.Surface(threades.resize_pos((930,600)),SRCALPHA)
+        mask.fill((0,0,0,0))
+        self.clock = pygame.time.Clock()
+        self.time = 0
+        #mask.set_alpha(0)
         self.alpha = 0
         self.image = mask
         self.rect = self.image.get_rect()
-        self.rect.move((0,0))
+        self.rect.move(threades.resize_pos((0,0)))
         self.counter = 0
         self.prev_disp = (0,0)
         self.move_dir = [(-20,-20),(-20,-10),(-20,0),(-20,10),(-20,20),(-10,-20),(-10,-20),(-10,0),(-10,10),(-10,20),(0,-20),(0,-10),(0,0),(0,10),(0,20),(10,-20),(10,-20),(10,0),(10,10),(10,20),(20,-20),(20,-10),(20,0),(20,10),(20,20)]
@@ -64,34 +67,40 @@ class Earthquake(pygame.sprite.Sprite):
         global ppl
 
 
-        self.counter +=1
-        if self.counter <50:
-            threades.transform_obj.move_free((-self.prev_disp[0],-self.prev_disp[1]))
-            self.prev_disp = self.move_dir[int(random.random()*25)]
-            threades.transform_obj.move_free(self.prev_disp)
-        if self.counter >20 and self.counter <50:
-            self.alpha +=8
-            self.image.set_alpha(self.alpha)
-        if self.counter==40:
-            display_text = ' Your Village Sheylan has ben hit by an Earthquake'
-            threades.message.push_message(display_text,'high')
-        if self.counter == 80:
-            display_earthquake_images()
-            threades.demolish_facility('Hospital')
-            threades.demolish_facility('House')
-            threades.demolish_facility('House')
-            threades.demolish_facility('House')
-            threades.demolish_facility('School')
-            threades.demolish_facility('Workshop')
-            model.ppl.change_total_population(-10)
-        if self.counter > 81:
-            if self.alpha >2:
-                self.alpha -=2
-            self.image.set_alpha(self.alpha)
-        if self.counter >180:
-            event = game_events.Event(type = game_events.ACTIONCOMPLETEEVENT, facility_name = '', res_name = '' , res_quantity = 0)
-            game_events.EventQueue.add(event)
-            threades.natural_calamities.remove(earthquake)
+        self.time += self.clock.tick()
+        if self.time >= 100:
+            self.counter +=1
+            self.time = 0
+            if self.counter <50:
+                threades.transform_obj.move_free((-self.prev_disp[0],-self.prev_disp[1]))
+                self.prev_disp = self.move_dir[int(random.random()*25)]
+                threades.transform_obj.move_free(self.prev_disp)
+            if self.counter >20 and self.counter <60:
+                self.alpha +=6
+                self.image.fill((0,0,0,int(self.alpha)))
+                #threades.screen.blit(self.image,(0,40))
+            if self.counter==40:
+                display_text = model.text_file.earthquake_hit_text
+                threades.message.push_message(display_text,'high')
+            if self.counter == 80:
+                threades.audio.play_music(True,'soundtrack')
+                display_earthquake_images()
+                threades.demolish_facility('Hospital')
+                threades.demolish_facility('House')
+                threades.demolish_facility('House')
+                threades.demolish_facility('House')
+                threades.demolish_facility('School')
+                threades.demolish_facility('Workshop')
+                model.ppl.change_total_population(-10)
+            if self.counter > 81:
+                if self.alpha >=2:
+                    self.alpha -=2
+                self.image.fill((0,0,0,int(self.alpha)))
+                #threades.screen.blit(self.image,(0,40))
+            if self.counter >220:
+                event = game_events.Event(type = game_events.ACTIONCOMPLETEEVENT, facility_name = '', res_name = '' , res_quantity = 0)
+                game_events.EventQueue.add(event)
+                threades.natural_calamities.remove(earth_quake)
 
 def display_earthquake_images():
 
@@ -104,13 +113,15 @@ def display_earthquake_images():
     threades.screen.blit(pygame.transform.scale(image2,threades.new_screen_size),(0,0))
     pygame.display.flip()
     sleep(3)
-
+    
     image3 = pygame.image.load(os.path.join('data', 'earthquake3.png')).convert()
     threades.screen.blit(pygame.transform.scale(image3,threades.new_screen_size),(0,0))
     pygame.display.flip()
     sleep(3)
+
     
-earthquake = None
+    
+earth_quake = None
 
 def earthquake():
     ''' This method needs to be called when there is an earthquake in the
@@ -119,5 +130,6 @@ def earthquake():
     '''
     global earthquake
 
-    earthquake  = Earthquake()
-    threades.natural_calamities.add(earthquake)
+    earth_quake  = Earthquake()
+    threades.natural_calamities.add(earth_quake)
+    threades.audio.play_music(True,'earthquake')

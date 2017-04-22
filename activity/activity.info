@@ -1,6 +1,6 @@
 [Activity]
-name = FoodForce2 
-activity_version = 4
+name = FoodForce2
+activity_version = 5
 host_version = 1
 service_name = org.laptop.community.FoodForce2
 icon = activity-foodforce2

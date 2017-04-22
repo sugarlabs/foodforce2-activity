@@ -1,39 +1,32 @@
-facplace.pkl
 load_images.py
-data.pkl
 olpc-setup.py
 game_sharing.py
 model.py
 READ ME.txt
 activity.py
-texts.py
+storyboard_list.pkl
 Exceptions.py
+setup.py
 graphics_layout.pkl
 game_events.py
-storyboard.pkl
+facilities.py
 gui_buttons.py
 display_panel.py
 Foodforce2.py
-data2.pkl
-data3.pkl
-data4.pkl
-data5.pkl
-data6.pkl
-data7.pkl
-data8.pkl
-data9.pkl
+haiti_storyboard.py
 font.ttf
+gokul_storyboard.py
 level_change.py
 POTFILES.in
 LEGAL.txt
-save_game.pkl
 gui.py
 LICENSE.txt
 defaultStyle.py
+texts_eng.py
 MANIFEST.in
 run.py
-initialize.py
 natural_calamities.py
+texts_spa.py
 proceduralFlow.py
 threades.py
 chat.py
@@ -97,7 +90,6 @@ data/farm.png
 data/map.png
 data/dot_hospital.png
 data/dot_house.png
-data/earthquake_st.png
 data/earthquake1.png
 data/earthquake2.png
 data/earthquake3.png
@@ -114,6 +106,7 @@ data/workshop_upgrade0.png
 data/workshop_upgrade1.png
 data/workshop_upgrade2.png
 data/workshop_upgrade3.png
+art/optionbox_green.png
 art/shadebutton.png
 art/panch.png
 art/son.png
@@ -133,4 +126,59 @@ art/combobox.png
 art/sukhdev.png
 art/optionbox.png
 art/ajmal.png
+storyboards/Haiti Earthquake/earthquake.ogg
+storyboards/Haiti Earthquake/storyboard.pkl
+storyboards/Haiti Earthquake/storyboard_eng.pkl
+storyboards/Haiti Earthquake/storyboard_spa.pkl
+storyboards/Haiti Earthquake/intro_image.png
+storyboards/Haiti Earthquake/init_fac.pkl
+storyboards/Haiti Earthquake/soundtrack.ogg
+storyboards/Haiti Earthquake/images/character images/ragnar.png
+storyboards/Haiti Earthquake/images/character images/gilbert.png
+storyboards/Haiti Earthquake/images/character images/stevenson.png
+storyboards/Haiti Earthquake/images/character images/john.png
+storyboards/Haiti Earthquake/images/character images/tony.png
+storyboards/Haiti Earthquake/images/chat images/haiti.png
+storyboards/Haiti Earthquake/images/chat images/earthquake_st.png
+storyboards/Haiti Earthquake/data/data.pkl
+storyboards/Haiti Earthquake/data/data1.pkl
+storyboards/Haiti Earthquake/data/data2.pkl
+storyboards/Haiti Earthquake/data/data3.pkl
+storyboards/Haiti Earthquake/data/data4.pkl
+storyboards/Haiti Earthquake/data/data5.pkl
+storyboards/Haiti Earthquake/data/data6.pkl
+storyboards/Gokul An Indian Village/storyboard.pkl
+storyboards/Gokul An Indian Village/storyboard_eng.pkl
+storyboards/Gokul An Indian Village/storyboard_spa.pkl
+storyboards/Gokul An Indian Village/intro_image.png
+storyboards/Gokul An Indian Village/init_fac.pkl
+storyboards/Gokul An Indian Village/soundtrack.ogg
+storyboards/Gokul An Indian Village/images/character images/panch.png
+storyboards/Gokul An Indian Village/images/character images/son.png
+storyboards/Gokul An Indian Village/images/character images/villager.png
+storyboards/Gokul An Indian Village/images/character images/kamat.png
+storyboards/Gokul An Indian Village/images/character images/priest.png
+storyboards/Gokul An Indian Village/images/character images/sukhdev.png
+storyboards/Gokul An Indian Village/images/character images/ajmal.png
+storyboards/Gokul An Indian Village/images/chat images/prosper.png
+storyboards/Gokul An Indian Village/images/chat images/drought.png
+storyboards/Gokul An Indian Village/images/chat images/Happy.png
+storyboards/Gokul An Indian Village/images/chat images/Wfpwork.png
+storyboards/Gokul An Indian Village/images/chat images/earthquake_st.png
+storyboards/Gokul An Indian Village/images/chat images/earthquake1.png
+storyboards/Gokul An Indian Village/images/chat images/earthquake2.png
+storyboards/Gokul An Indian Village/images/chat images/earthquake3.png
+storyboards/Gokul An Indian Village/data/data1.pkl
+storyboards/Gokul An Indian Village/data/data2.pkl
+storyboards/Gokul An Indian Village/data/data3.pkl
+storyboards/Gokul An Indian Village/data/data4.pkl
+storyboards/Gokul An Indian Village/data/data5.pkl
+storyboards/Gokul An Indian Village/data/data6.pkl
+storyboards/Gokul An Indian Village/data/data7.pkl
+storyboards/Gokul An Indian Village/data/data8.pkl
+storyboards/Gokul An Indian Village/data/data9.pkl
+sounds/soundtrack.ogg
+sounds/effects/build1.ogg
+sounds/effects/build2.ogg
+sounds/effects/build3.ogg
 po/POTFILES.in

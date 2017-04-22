@@ -5,7 +5,7 @@ from pygame import draw
 from pygame import Rect
 from pygame import mouse
 
-## COSTANTS ##
+## CONSTANTS ##
 APP_FLAT = 1
 APP_3D = 2
 
@@ -185,6 +185,7 @@ def wrapText(text, font, width):
                 return currLine + "\n" + wrapText(' '.join(words[len(words)-i:]),font,width)
             i += 1
     else:
+	#print text
         return text
 
 def drawHTiled(frm, lenght, source, dest):
@@ -367,18 +368,19 @@ class Widget(object):
             if not pygame.mouse.b1:
                 if self == topmost and not self.mouseover:
                     self._getMouseOver()
+		    
                 elif self != topmost and self.mouseover:
                     self._loseMouseOver()
-            
+		    
             #Checks if mouse is over and button is pressed   
             if self.mouseover and mouse.b1 and not self.mousedown:
-                #Sets the button is pressed
+		#Sets the button is pressed
                 self.mousedown = True
                 
                 #Calls on mouse down event if present
                 if self.onMouseDown:
                     self.onMouseDown(self)
-                
+		    
                 #Refreshes if he wants
                 if self.REFRESH_ON_MOUSE_DOWN:
                     self.needsRefresh = True
@@ -392,7 +394,7 @@ class Widget(object):
                     self.mouseclick = True
                     
                     if self.onClick:
-                        self.onClick(self)
+			self.onClick(self)
                 
                 if self.REFRESH_ON_MOUSE_CLICK:
                     self.needsRefresh = True

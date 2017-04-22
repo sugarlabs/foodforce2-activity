@@ -4,4 +4,6 @@ include olpcgames/COPYING
 recursive-include olpcgames *.*
 recursive-include data *.*
 recursive-include art *.*
+recursive-include storyboards *
+recursive-include sounds *
 recursive-include po *.*

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-#
+# -*- coding: ISO-8859-1 -*-
 #   Author : Mohit Taneja (mohitgenii@gmail.com)
 #   Date : 9/06/2008 
 #
@@ -33,6 +33,8 @@ import model
 #from model import *
 import pygame
 import load_images
+import texts_spa
+import texts_eng
 
 class bar:
 
@@ -52,20 +54,17 @@ class bar:
 
     def update_value(self,value):
         '''Updates the value of the bar
+        The rect's are drawn again and again here, what could if we do to just possibly update them in a 
+        a less expensive manner.
         '''
 
         max_value = 100.0
         max_pixel = 246.0
-        colour = (177,135,73)           
-        pygame.draw.rect(threades.screen,self.color_bar,threades.resize_rect((self.x,self.y,250,18)),2)        
-        pygame.draw.rect(threades.screen,colour,threades.resize_rect((self.x+2,self.y+2,value/max_value*max_pixel,14)))
-        pygame.draw.rect(threades.screen,(255,255,255),threades.resize_rect((self.x+2+value/max_value*max_pixel,self.y+2,max_pixel-value/max_value*max_pixel,14)))
-
-
-
-
-
-
+        colour = (177,135,73)   
+        t = value/max_value*max_pixel
+        #pygame.draw.rect(threades.screen,self.color_bar,threades.resize_rect((self.x,self.y,250,18)),2)        
+        pygame.draw.rect(threades.screen,colour,threades.resize_rect((self.x+2,self.y+2,t,14)))
+        pygame.draw.rect(threades.screen,(255,255,255),threades.resize_rect((self.x+2+t,self.y+2,max_pixel-t,14)))
 
 class indicator_panel:
 
@@ -76,10 +75,10 @@ class indicator_panel:
     def __init__(self):
         ''' Draws the indicator panel on the surface
         '''
-        
         self.update_flag = True
-
-        myfont1 = pygame.font.Font("font.ttf", threades.resize_pt(30))   # For main heading
+        
+        self.name_labels = []
+        myfont1 = pygame.font.Font("font.ttf", threades.resize_pt(25))   # For main heading
 
         myfont2 = pygame.font.Font("font.ttf", threades.resize_pt(20))   # For indicators name
         myfont3 = pygame.font.Font("font.ttf", threades.resize_pt(16))
@@ -92,8 +91,8 @@ class indicator_panel:
         self.labelstyle1['font-color'] = self.font_color
         self.labelstyle1['border-color'] = self.color_grey
         # Drawing main Indicator label
-        label = gui.Label(position = threades.resize_pos((900,600)),size = threades.resize_pos((300,45)), parent = threades.desktop, text = "  Progress Bars", style = self.labelstyle1)
-
+        label = gui.Label(position = threades.resize_pos((900,600)),size = threades.resize_pos((300,45)), parent = threades.desktop, text = "  "+model.text_file.indicators_text[0], style = self.labelstyle1)
+        self.name_labels.append(label)
         #print " deawing indicator panel"
         
         # Creating second custom label
@@ -104,8 +103,9 @@ class indicator_panel:
         self.labelstyle2['font'] = myfont2
         self.labelstyle2['font-color'] = self.font_color
         self.labelstyle2['border-color'] = self.color_grey
+        
+        
         # Drawing all the indicators
-        ind_namelist = (' Housing',' Nutrition',' Health',' Education',' Training')
 
         # Creating second custom label
         self.labelstyle3 = gui.defaultLabelStyle.copy()
@@ -118,16 +118,24 @@ class indicator_panel:
         
         # Empty Dictionary for bar
         self.bar_dict = []
+        
         name_label_size = threades.resize_pos((300,25))
         self.value_labels = []
         for i in range(5):
-            label = gui.Label(position = threades.resize_pos((900,650+50*i)),size = name_label_size, parent = threades.desktop, text = ind_namelist[i], style = self.labelstyle2)
+            label = gui.Label(position = threades.resize_pos((900,650+50*i)),size = name_label_size, parent = threades.desktop, text = model.text_file.ind_namelist[i], style = self.labelstyle2)
+            self.name_labels.append(label)
             self.bar_dict.append(bar((902,677+50*i)))
             label = gui.Label(position = threades.resize_pos((1160,677+50*i)), parent = threades.desktop, text = str(0), style = self.labelstyle3)
             self.value_labels.append(label)
+            
+
     
-
-
+    def update_name(self):
+        
+        self.name_labels[0].text = model.text_file.indicators_text[0]
+        for i in range(1,6):
+            self.name_labels[i].text = model.text_file.ind_namelist[i-1]
+            
 
 
     def update_value(self):
@@ -172,7 +180,7 @@ class resources_panel:
         self.money_flag = True
         self.time_flag = False
         self.time_help_value=0
-        myfont1 = pygame.font.Font("font.ttf", threades.resize_pt(30))   # For main heading
+        myfont1 = pygame.font.Font("font.ttf", threades.resize_pt(25))   # For main heading
         myfont2 = pygame.font.Font("font.ttf", threades.resize_pt(20))   # For model.resources name and their value
         myfont3 = pygame.font.Font("font.ttf", threades.resize_pt(16))
         myfont4 = pygame.font.Font("font.ttf", threades.resize_pt(18))   # For the display of model.money
@@ -186,10 +194,10 @@ class resources_panel:
         self.labelstyle1['font-color'] = self.font_color
         self.labelstyle1['border-color'] = self.color_grey
         
-
+        self.name_labels = []
         # Drawing main Resources rectangle
-        label = gui.Label(position = threades.resize_pos((400,600)),size = threades.resize_pos((500,45)), parent = threades.desktop, text = "                    Resources", style = self.labelstyle1)
-
+        label = gui.Label(position = threades.resize_pos((400,600)),size = threades.resize_pos((500,45)), parent = threades.desktop, text = "                    "+model.text_file.resources_text[0], style = self.labelstyle1)
+        self.name_labels.append(label)
         # Creating second label style
         self.labelstyle2 = gui.defaultLabelStyle.copy()
         self.labelstyle2['border-width'] = 0
@@ -211,23 +219,39 @@ class resources_panel:
         self.labelstyle4['autosize'] = True
         self.labelstyle4['font'] = myfont4
         self.labelstyle4['font-color'] = (160,160,160)
-        self.money_label = gui.Label(position = threades.resize_pos((850,10)), parent = threades.desktop, text = 'Money -:   '+str(int(model.money.get_money()))+'      ', style = self.labelstyle4)
-        self.time_label= gui.Label(position = threades.resize_pos((300,10)), parent = threades.desktop, text = 'Time Elapsed -:   '+'Level Just Started''      ', style = self.labelstyle4)
+        self.money_label = gui.Label(position = threades.resize_pos((820,10)), parent = threades.desktop, text = model.text_file.money_text[0]+' -:   '+str(int(model.money.get_money()))+'      ', style = self.labelstyle4)
+        self.name_labels.append(self.money_label)
+        self.time_label= gui.Label(position = threades.resize_pos((270,10)), parent = threades.desktop, text = model.text_file.time_text[0]+' -:   '+model.text_file.time_text[1]+'      ', style = self.labelstyle4)
+        self.name_labels.append(self.time_label)
         self.value_labels = []
         # Drawing general model.resources list
-        list_gen_res = (' Water',' Bricks',' Tools',' Medicines',' Books')
+        
         for i in range(5):
-            label = gui.Label(position = threades.resize_pos((400,645+35*i)),size = threades.resize_pos((200,35)), parent = threades.desktop, text = list_gen_res[i], style = self.labelstyle2)
+            label = gui.Label(position = threades.resize_pos((400,645+35*i)),size = threades.resize_pos((200,35)), parent = threades.desktop, text = model.text_file.list_gen_res[i], style = self.labelstyle2)
+            self.name_labels.append(label)
             label = gui.Label(position = threades.resize_pos((605,649+35*i)), parent = threades.desktop, text = str(int(model.resources[i].get_vquantity())), style = self.labelstyle3)
             self.value_labels.append(label)
             
         # Drawing food model.resources list
-        list_food_res = (' Rice',' Fruit & Vegetables',' Beans',' Sugar',' Salt',' Oil')
+        
         for i in range(6):
-            label = gui.Label(position = threades.resize_pos((650,645+35*i)),size = threades.resize_pos((200,35)), parent = threades.desktop, text = list_food_res[i], style = self.labelstyle2)
+            label = gui.Label(position = threades.resize_pos((650,645+35*i)),size = threades.resize_pos((200,35)), parent = threades.desktop, text = model.text_file.list_food_res[i], style = self.labelstyle2)
+            self.name_labels.append(label)
             label = gui.Label(position = threades.resize_pos((855,649+35*i)), parent = threades.desktop, text = str(int(model.resources[i+5].get_vquantity())), style = self.labelstyle3)
             self.value_labels.append(label)
-    
+            
+            
+    def update_name(self):
+        
+        self.name_labels[0].text = "                    "+model.text_file.resources_text[0]
+        self.name_labels[1].text = model.text_file.money_text[0]+' -: '+str(int(model.money.get_money()))+'      '
+        self.name_labels[2].text = model.text_file.time_text[0]+' -: '+model.text_file.time_text[1]+'      '
+        for i in range(3,8):
+            self.name_labels[i].text = model.text_file.list_gen_res[i-3]
+            
+        for i in range(8,14):
+            self.name_labels[i].text = model.text_file.list_food_res[i-8]
+            
 
     def update_value(self):
         ''' Updates the model.resources panel
@@ -248,16 +272,16 @@ class resources_panel:
                 if not (self.value_labels[i].text == str(int(model.resources[i].get_vquantity()))):
                     self.value_labels[i].text = str(int(model.resources[i].get_vquantity()))
         
-        if not (self.money_label.text == 'Money -:   '+str(int(model.money.get_money()))+'      '):
+        if not (self.money_label.text == model.text_file.money_text[0] +' -:   '+str(int(model.money.get_money()))+'      '):
             self.money_flag = True
-            self.money_label.text = 'Money -:   '+str(int(model.money.get_money()))+'      '
+            self.money_label.text = model.text_file.money_text[0] +' -:   '+str(int(model.money.get_money()))+'      '
          
         #print 'no of days is',model.game_controller.get_days()
         if self.time_flag==True:
             #self.time_label.text=''
             #NOTE: Here, I am not adding as if years is not 0 , then only it will be blitted becoz if do like that the things will keep on changing, not a nice view
-            self.time_label.text='Time Elapsed -:   '+'Years: '+str(model.game_controller.get_years())+'  Months: '+str(model.game_controller.get_months()) +'  Days: '+str(model.game_controller.get_days()) 
-            self.time_flag=False
+            self.time_label.text= model.text_file.time_text[0]+' -:   '+model.text_file.time_text[2]+': '+str(model.game_controller.get_years())+'  '+model.text_file.time_text[3]+': '+str(model.game_controller.get_months()) +'  '+model.text_file.time_text[4]+': '+str(model.game_controller.get_days()) 
+            self.time_flag=True
             
         #to update the money flag
         
@@ -285,7 +309,7 @@ class manpower_panel:
         '''
         
         self.update_flag = True
-        myfont1 = pygame.font.Font("font.ttf", threades.resize_pt(30))   # For main heading
+        myfont1 = pygame.font.Font("font.ttf", threades.resize_pt(25))   # For main heading
         myfont2 = pygame.font.Font("font.ttf", threades.resize_pt(20))   # For model.resources name and their value
         myfont3 = pygame.font.Font("font.ttf", threades.resize_pt(16))   # For model.resources name and their value
 
@@ -297,10 +321,10 @@ class manpower_panel:
         self.labelstyle1['font'] = myfont1
         self.labelstyle1['font-color'] = self.font_color
         self.labelstyle1['border-color'] = self.color_grey
-
+        self.name_labels = []
         # Drawing main Manpower Resources rectangle
-        label = gui.Label(position = threades.resize_pos((0,600)),size = threades.resize_pos((400,45)), parent = threades.desktop, text = "  Manpower Distribution", style = self.labelstyle1)
-
+        label = gui.Label(position = threades.resize_pos((0,600)),size = threades.resize_pos((400,45)), parent = threades.desktop, text = "  "+model.text_file.mpwr_resources_text[0], style = self.labelstyle1)
+        self.name_labels.append(label)
         # Creating second label style
         self.labelstyle2 = gui.defaultLabelStyle.copy()
         self.labelstyle2['border-width'] = 0
@@ -319,16 +343,22 @@ class manpower_panel:
         self.labelstyle3['border-color'] = self.color_grey
 
         # Drawing Manpower model.resources list
-        list_names = (' Total Population',' Sheltered People',' Educated People',' Healthy People',' People Fed',' People Employed')
+        list_names = model.text_file.mpwr_list_names
         list_values = (model.ppl.get_total_population(),model.ppl.get_no_of_ppl_sheltered(),model.ppl.get_no_of_ppl_educated(),model.ppl.get_no_of_ppl_healthy(),model.ppl.get_no_of_ppl_fed(),model.ppl.get_total_no_of_ppl_emp())
         
         self.value_labels = []
         for i in range(6):
             label = gui.Label(position = threades.resize_pos((0,645+35*i)),size = threades.resize_pos((350,35)), parent = threades.desktop, text = list_names[i], style = self.labelstyle2)
+            self.name_labels.append(label)
             label = gui.Label(position = threades.resize_pos((355,649+35*i)), parent = threades.desktop, text = str(int(list_values[i])), style = self.labelstyle3)
             self.value_labels.append(label)
 
-
+    def update_name(self):
+        
+        self.name_labels[0].text = model.text_file.mpwr_resources_text[0]
+        for i in range(1,7):
+            self.name_labels[i].text = model.text_file.mpwr_list_names[i-1]
+            
     def update_value(self):
         ''' Updates the Manpower panel
         '''
@@ -364,7 +394,7 @@ class facilities_panel:
         '''
         self.update_flag = True
         myfont1 = pygame.font.Font("font.ttf", threades.resize_pt(20))   # For model.resources name and their value
-        
+        self.name_labels = []
         self.labelstyle1 = gui.defaultLabelStyle.copy()
         self.labelstyle1['border-width'] = 0
         self.labelstyle1['wordwrap'] = False
@@ -373,24 +403,34 @@ class facilities_panel:
         self.labelstyle1['font-color'] = self.font_color
         #self.labelstyle1['bg-color'] = self.font_bg_color
         
-        self.list_titles = ('Huts ','Schools ','Hospitals ','Workshops ','Farms ','Wells ')
-        self.list_names = ('Number: ','Number: ','Number: ','Number: ','Number: ','Number: ')
+        self.list_titles = model.text_file.facilities_list
+        self.list_names = [model.text_file.num_text[0]+': ']
         self.list_values1 = (model.House.get_number(),model.School.get_number(),model.Hospital.get_number(),model.Workshop.get_number(),model.Farm.get_number(),model.Fountain.get_number())
         self.list_values2 = (model.House.get_level(),model.School.get_level(),model.Hospital.get_level(),model.Workshop.get_level(),model.Farm.get_level(),model.Fountain.get_level())
         self.value_labels = []
         for i in range(6):
             label = gui.Label(position = threades.resize_pos((950,50+55*i)),size = threades.resize_pos((300,30)), parent = threades.desktop, text = self.list_titles[i], style = self.labelstyle1)
-            label = gui.Label(position = threades.resize_pos((950,75+55*i)),size = threades.resize_pos((300,30)), parent = threades.desktop, text = self.list_names[i]+str(int(self.list_values1[i]))+' Level: '+str(int(self.list_values2[i])), style = self.labelstyle1)
+            self.name_labels.append(label)
+            label = gui.Label(position = threades.resize_pos((950,75+55*i)),size = threades.resize_pos((300,30)), parent = threades.desktop, text = self.list_names[0]+str(int(self.list_values1[i]))+model.text_file.level_text[0]+':'+str(int(self.list_values2[i])), style = self.labelstyle1)
+            self.name_labels.append(label)
             label.surf.set_alpha(200)
             self.value_labels.append(label)
 
-
+            
+    def update_name(self):
+        
+        for i in range(6):
+            self.name_labels[2*i].text = model.text_file.facilities_list[i]
+            self.name_labels[2*i+1].text = model.text_file.num_text[0]+':'+str(int(self.list_values1[i]))+model.text_file.level_text[0]+':'+str(int(self.list_values2[i]))
+            
+        print self.name_labels[3].text
+        
     def update_value(self):
         ''' Updates the Facilities panel
         '''
         for i in range(6):
 
-            if not (self.value_labels[i].text == self.list_names[i]+str(int(self.list_values1[i]))+' Level: '+str(int(self.list_values2[i]))):
+            if not (self.value_labels[i].text == self.list_names[0]+str(int(self.list_values1[i]))+' '+model.text_file.level_text[0]+': '+str(int(self.list_values2[i]))):
                 self.update_flag = False
         
         if self.update_flag or threades.facilities_update_flag or threades.total_update_flag:
@@ -400,8 +440,8 @@ class facilities_panel:
             pygame.draw.rect(threades.screen,(0,0,0),threades.resize_rect((930,40,270,350))) 
             for i in range(6):
     
-                if not (self.value_labels[i].text == self.list_names[i]+str(int(self.list_values1[i]))+' Level: '+str(int(self.list_values2[i]))):
-                    self.value_labels[i].text = self.list_names[i]+str(int(self.list_values1[i]))+' Level: '+str(int(self.list_values2[i]))
+                if not (self.value_labels[i].text == model.text_file.num_text[0]+':'+str(int(self.list_values1[i]))+' '+model.text_file.level_text[0]+': '+str(int(self.list_values2[i]))):
+                    self.value_labels[i].text = model.text_file.num_text[0]+':'+str(int(self.list_values1[i]))+' '+model.text_file.level_text[0]+': '+str(int(self.list_values2[i]))
         
         self.update_flag = False
         
@@ -451,10 +491,15 @@ class display_panel:
         self.fac = facilities_panel()
         self.map = mini_map()
 
-
     def update(self):
         self.ind.update_value()
         self.res.update_value()
         self.map.update()
         self.man.update_value()
         self.fac.update_value()
+
+    def change_labels(self):
+        self.ind.update_name()
+        self.res.update_name()
+        self.man.update_name()
+        self.fac.update_name()
