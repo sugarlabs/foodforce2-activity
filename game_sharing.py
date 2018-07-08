@@ -19,7 +19,7 @@
 #
 
 import olpcgames.mesh as mesh
-from sugar.presence import presenceservice
+from sugar3.presence import presenceservice
 import sys
 import types
 import pygame
